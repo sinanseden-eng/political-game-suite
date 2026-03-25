@@ -1,0 +1,2164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Political Arena: Vocab Games</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:ital,wght@0,500;0,700;0,900;1,500;1,700&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --pol-dark: #0f172a;       /* Slate 900 */
+            --pol-navy: #1e3a8a;       /* Blue 900 */
+            --pol-crimson: #9f1239;    /* Rose 800 */
+            --pol-gold: #d4af37;       /* Metallic Gold */
+            --pol-gold-light: #fbe08d; /* Light Gold */
+            --pol-paper: #f8fafc;      /* Slate 50 */
+        }
+        
+        body {
+            font-family: 'Source Sans 3', sans-serif;
+            background-color: var(--pol-dark);
+            background-image: radial-gradient(circle at top right, #1e3a8a 0%, #0f172a 100%);
+            color: var(--pol-paper);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        h1, h2, h3, .font-display {
+            font-family: 'Cinzel', serif;
+            letter-spacing: 0.5px;
+        }
+
+        /* Glassmorphism & Borders */
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+        }
+
+        .gold-border {
+            position: relative;
+        }
+        .gold-border::before {
+            content: '';
+            position: absolute;
+            top: 5px; left: 5px; right: 5px; bottom: 5px;
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            border-radius: inherit;
+            pointer-events: none;
+        }
+
+        /* Animations */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+        .animate-shake { animation: shake 0.3s ease-in-out; }
+
+        @keyframes popIn {
+            0% { transform: scale(0.95); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop-in { animation: popIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        
+        @keyframes pulse-fast {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+        }
+        .animate-pulse-fast { animation: pulse-fast 0.8s infinite; }
+
+        /* Interactive Elements */
+        .game-btn { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .game-btn:hover { 
+            transform: translateY(-5px); 
+            box-shadow: 0 15px 30px -5px rgba(212, 175, 55, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.5); 
+            border-color: rgba(212, 175, 55, 0.6);
+        }
+        .game-btn:active { transform: translateY(1px); }
+
+        .letter-tile {
+            width: 3.5rem; height: 3.5rem;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.8rem; font-family: 'Cinzel', serif; font-weight: 900;
+            border-radius: 0.5rem; user-select: none; text-transform: uppercase;
+        }
+        .letter-tile.empty { background: rgba(255,255,255,0.05); border: 2px dashed rgba(255,255,255,0.2); }
+        .letter-tile.filled { 
+            background: linear-gradient(to bottom right, var(--pol-gold-light), var(--pol-gold)); 
+            color: #000; border: 2px solid #fff; box-shadow: 0 4px 0 #856404; 
+        }
+
+        /* 3D Flip Cards */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+
+        /* Timer Bar */
+        .timer-bar-container { width: 100%; height: 10px; background: rgba(255, 255, 255, 0.1); border-radius: 5px; overflow: hidden; margin-bottom: 1.5rem; }
+        .timer-bar { height: 100%; background: var(--pol-gold); transition: width 1s linear, background-color 0.3s; }
+        .timer-warning { background: #f43f5e; }
+        .timer-danger { background: #e11d48; }
+
+        .view { display: none; }
+        .view.active { display: block; }
+
+        /* Millionaire specific */
+        .ladder-step.active { background-color: var(--pol-gold); color: #000; font-weight: bold; border-radius: 6px; border: 1px solid white; }
+        .ladder-step.passed { color: var(--pol-gold-light); opacity: 0.7; }
+        
+        /* Tycoon Board Specifics (6x6) */
+        .tycoon-board {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            grid-template-rows: repeat(6, 1fr);
+            gap: 8px;
+            width: 100%;
+            max-width: 800px;
+            aspect-ratio: 1 / 1;
+            margin: 0 auto;
+        }
+        .tycoon-space {
+            background: rgba(248, 250, 252, 0.95);
+            border-radius: 8px;
+            border: 2px solid #475569;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 4px;
+            position: relative;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        .tycoon-corner {
+            background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+            border-color: #d4af37;
+            color: #fbe08d;
+        }
+        .tycoon-center {
+            grid-column: 2 / 6;
+            grid-row: 2 / 6;
+            background: rgba(15, 23, 42, 0.9);
+            border-radius: 16px;
+            border: 2px dashed #d4af37;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .player-token {
+            position: absolute;
+            font-size: 1.8rem;
+            width: 44px;
+            height: 44px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 50%;
+            border: 2px solid #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 50;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+        }
+        .dice-roll-anim { animation: diceSpin 0.5s ease-in-out; }
+        @keyframes diceSpin {
+            0% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(180deg) scale(1.5); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 flex flex-col items-center justify-center">
+
+    <div class="fixed top-0 left-0 w-full h-full pointer-events-none opacity-10" style="background-image: url('https://www.transparenttextures.com/patterns/stardust.png');"></div>
+
+    <div class="w-full max-w-7xl relative z-10">
+        
+        <div id="view-dashboard" class="view active animate-pop-in">
+            <div class="text-center mb-12">
+                <span class="border border-yellow-500/50 text-yellow-400 text-xs font-bold px-5 py-1.5 rounded-full uppercase tracking-widest shadow-lg bg-yellow-500/10">Political Science & Ideology</span>
+                <h1 class="text-5xl md:text-7xl mt-6 mb-4 text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 font-display drop-shadow-md">The Political Arena</h1>
+                <p class="text-xl text-blue-200 font-light">Master the vocabulary of governments, elections, and civic duties.</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="glass gold-border rounded-xl p-8 text-center flex flex-col justify-between game-btn cursor-pointer" onclick="startGame('speedrun')">
+                    <div>
+                        <div class="text-5xl mb-4 drop-shadow-md">📜</div>
+                        <h2 class="text-2xl text-yellow-400 mb-2 font-display italic">Policy Rush</h2>
+                        <p class="text-blue-100 text-sm mb-6">Speed run! Match the definition to the correct political or economic term.</p>
+                    </div>
+                    <button class="w-full bg-slate-900 hover:bg-slate-800 text-yellow-400 border border-yellow-500/30 font-bold py-3 rounded text-lg transition-all tracking-wider font-display">Cast Vote</button>
+                </div>
+
+                <div class="glass gold-border rounded-xl p-8 text-center flex flex-col justify-between game-btn cursor-pointer" onclick="startGame('scrambler')">
+                    <div>
+                        <div class="text-5xl mb-4 drop-shadow-md">🕵️</div>
+                        <h2 class="text-2xl text-yellow-400 mb-2 font-display italic">Classified Cipher</h2>
+                        <p class="text-blue-100 text-sm mb-6">Hangman style. Guess the target vocabulary word letter by letter to declassify the file.</p>
+                    </div>
+                    <button class="w-full bg-slate-900 hover:bg-slate-800 text-yellow-400 border border-yellow-500/30 font-bold py-3 rounded text-lg transition-all tracking-wider font-display">Decrypt File</button>
+                </div>
+
+                <div class="glass gold-border rounded-xl p-8 text-center flex flex-col justify-between game-btn cursor-pointer" onclick="startGame('restoration')">
+                    <div>
+                        <div class="text-5xl mb-4 drop-shadow-md">🤝</div>
+                        <h2 class="text-2xl text-yellow-400 mb-2 font-display italic">Bipartisan Match</h2>
+                        <p class="text-blue-100 text-sm mb-6">Memory match! Pair the related vocabulary words across the political aisle.</p>
+                    </div>
+                    <button class="w-full bg-slate-900 hover:bg-slate-800 text-yellow-400 border border-yellow-500/30 font-bold py-3 rounded text-lg transition-all tracking-wider font-display">Reach Across</button>
+                </div>
+                
+                <div class="glass gold-border rounded-xl p-8 text-center flex flex-col justify-between game-btn cursor-pointer" onclick="startGame('defuse')">
+                    <div>
+                        <div class="text-5xl mb-4 drop-shadow-md">💣</div>
+                        <h2 class="text-2xl text-yellow-400 mb-2 font-display italic">Crisis Defuse</h2>
+                        <p class="text-blue-100 text-sm mb-6">High-pressure context! Cut the correct wire by choosing the word that fits the bill.</p>
+                    </div>
+                    <button class="w-full bg-slate-900 hover:bg-slate-800 text-yellow-400 border border-yellow-500/30 font-bold py-3 rounded text-lg transition-all tracking-wider font-display">Avert Crisis</button>
+                </div>
+
+                <div class="glass gold-border rounded-xl p-8 text-center flex flex-col justify-between game-btn cursor-pointer" onclick="startGame('sentence')">
+                    <div>
+                        <div class="text-5xl mb-4 drop-shadow-md">⚖️</div>
+                        <h2 class="text-2xl text-yellow-400 mb-2 font-display italic">Debate Clash</h2>
+                        <p class="text-blue-100 text-sm mb-6">Team vs Team. Create a meaningful sentence connecting exactly two target words.</p>
+                    </div>
+                    <button class="w-full bg-slate-900 hover:bg-slate-800 text-yellow-400 border border-yellow-500/30 font-bold py-3 rounded text-lg transition-all tracking-wider font-display">Take Podium</button>
+                </div>
+
+                <div class="glass gold-border rounded-xl p-8 text-center flex flex-col justify-between game-btn cursor-pointer" onclick="startGame('jeopardy')">
+                    <div>
+                        <div class="text-5xl mb-4 drop-shadow-md">🏛️</div>
+                        <h2 class="text-2xl text-yellow-400 mb-2 font-display italic">Political Jeopardy</h2>
+                        <p class="text-blue-100 text-sm mb-6">The ultimate quiz show review covering Ideologies, Rulers, Systems, and the Economy.</p>
+                    </div>
+                    <button class="w-full bg-slate-900 hover:bg-slate-800 text-yellow-400 border border-yellow-500/30 font-bold py-3 rounded text-lg transition-all tracking-wider font-display">Host Hearing</button>
+                </div>
+
+                <div class="glass gold-border rounded-xl p-8 text-center flex flex-col justify-between game-btn cursor-pointer lg:col-span-3" onclick="startGame('millionaire')">
+                    <div>
+                        <div class="text-5xl mb-4 drop-shadow-md">🦅</div>
+                        <h2 class="text-2xl text-yellow-400 mb-2 font-display italic">Campaign Trail Trivia</h2>
+                        <p class="text-blue-100 text-sm mb-6">Climb the ladder from City Council to President of the World by answering high-pressure multiple-choice questions!</p>
+                    </div>
+                    <button class="w-full bg-slate-900 hover:bg-slate-800 text-yellow-400 border border-yellow-500/30 font-bold py-3 rounded text-lg transition-all tracking-wider font-display">Start Campaign</button>
+                </div>
+
+                <div class="glass gold-border rounded-xl p-8 text-center flex flex-col justify-between game-btn cursor-pointer lg:col-span-1" onclick="startGame('baamboozle')">
+                    <div>
+                        <div class="text-5xl mb-4 drop-shadow-md">📉</div>
+                        <h2 class="text-2xl text-yellow-400 mb-2 font-display italic">Gridlock</h2>
+                        <p class="text-blue-100 text-sm mb-6">Baamboozle style! Pick tiles to answer questions or trigger chaotic political scandals!</p>
+                    </div>
+                    <button class="w-full bg-slate-900 hover:bg-slate-800 text-yellow-400 border border-yellow-500/30 font-bold py-3 rounded text-lg transition-all tracking-wider font-display">Break Gridlock</button>
+                </div>
+
+                <div class="glass gold-border rounded-xl p-8 text-center flex flex-col justify-between game-btn cursor-pointer lg:col-span-2" onclick="startGame('tycoon')">
+                    <div>
+                        <div class="text-5xl mb-4 drop-shadow-md">🗳️</div>
+                        <h2 class="text-2xl text-yellow-400 mb-2 font-display italic">Political Tycoon</h2>
+                        <p class="text-blue-100 text-sm mb-6">Pick your custom tokens! Land on government offices, pass laws to claim them, and charge the opposition lobbying fees!</p>
+                    </div>
+                    <button class="w-full bg-slate-900 hover:bg-slate-800 text-yellow-400 border border-yellow-500/30 font-bold py-3 rounded text-lg transition-all tracking-wider font-display">Enter Setup</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-speedrun" class="view">
+            <div class="glass gold-border rounded-3xl p-6 md:p-10 relative max-w-4xl mx-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <button onclick="showView('dashboard')" class="text-yellow-500 hover:text-yellow-300 font-bold tracking-widest text-sm uppercase">← Back</button>
+                    <div class="text-3xl font-display text-yellow-400" id="sr-score">Votes: 0</div>
+                </div>
+                <div class="timer-bar-container"><div id="sr-timer-bar" class="timer-bar" style="width: 100%;"></div></div>
+                <div class="text-center text-sm font-bold text-blue-300 mb-8 tracking-widest uppercase font-display">Seconds Remaining: <span id="sr-time-text" class="text-white text-lg">60</span></div>
+                <div id="sr-play-area" class="animate-pop-in">
+                    <div class="bg-black/40 border border-yellow-500/20 p-8 rounded-xl mb-8 text-center shadow-inner min-h-[180px] flex flex-col justify-center relative">
+                        <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-yellow-600 text-black text-[10px] font-bold uppercase tracking-[0.2em] py-1 px-4 rounded-sm">Constitutional Definition</div>
+                        <h3 id="sr-definition" class="text-2xl md:text-4xl font-medium text-white leading-tight font-display italic"></h3>
+                    </div>
+                    <div id="sr-options" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-scrambler" class="view">
+            <div class="glass gold-border rounded-3xl p-6 md:p-10 relative max-w-4xl mx-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <button onclick="showView('dashboard')" class="text-yellow-500 hover:text-yellow-300 font-bold tracking-widest text-sm uppercase">← Back</button>
+                    <div class="flex items-center gap-6">
+                        <div class="text-2xl font-display text-yellow-400" id="sc-score">Score: 0</div>
+                        <div class="text-xl font-display text-blue-300" id="sc-progress">File 1 of 5</div>
+                    </div>
+                </div>
+                
+                <div id="sc-play-area" class="animate-pop-in text-center flex flex-col items-center">
+                    <div class="bg-black/40 border border-yellow-500/20 p-8 rounded-xl w-full mb-8 shadow-inner relative mt-4 min-h-[120px] flex flex-col justify-center">
+                        <span class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-red-800 text-white text-[10px] font-bold uppercase tracking-[0.2em] py-1 px-4 rounded-sm">Top Secret Intel</span>
+                        <h3 id="sc-definition" class="text-xl md:text-3xl font-medium text-white leading-tight font-display italic mt-2"></h3>
+                    </div>
+
+                    <div class="mb-6 flex flex-col items-center">
+                        <p class="text-xs text-blue-300 uppercase tracking-widest mb-2 font-bold">Ballots Remaining</p>
+                        <div class="flex gap-2 text-2xl" id="sc-lives-display"></div>
+                    </div>
+
+                    <div class="mb-8 w-full"><div id="sc-target-slots" class="flex flex-wrap justify-center gap-3 min-h-[4rem]"></div></div>
+                    
+                    <div class="w-full max-w-3xl bg-black/30 p-4 md:p-6 rounded-2xl border border-yellow-500/10 mb-6"><div id="sc-letters-pool" class="flex flex-wrap justify-center content-start gap-1"></div></div>
+                    
+                    <div class="flex gap-4 w-full justify-center">
+                        <button onclick="scramblerHint()" class="bg-blue-700 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-lg transition text-sm border border-blue-500 uppercase tracking-wider">💡 Intel Leak (-1 Ballot)</button>
+                        <button onclick="scramblerReveal()" class="bg-red-900 hover:bg-red-800 text-white font-bold py-3 px-8 rounded-lg transition text-sm border border-red-700 uppercase tracking-wider">👁️ Declassify</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-restoration" class="view">
+            <div class="glass gold-border rounded-3xl p-6 md:p-10 relative max-w-5xl mx-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <button onclick="showView('dashboard')" class="text-yellow-500 hover:text-yellow-300 font-bold tracking-widest text-sm uppercase">← Back</button>
+                    <div class="text-3xl font-display text-yellow-400" id="res-score">Matches: 0 / 8</div>
+                </div>
+
+                <div class="bg-black/30 rounded-xl p-4 mb-8 text-center max-w-md mx-auto shadow-inner border border-yellow-500/20">
+                    <div class="text-5xl font-display text-white mb-2 tracking-widest" id="res-timer-display">01:00</div>
+                    <div class="flex justify-center items-center gap-3 mb-4">
+                        <button onclick="adjustResTimer(-10)" class="text-yellow-500 font-bold hover:text-yellow-300 transition px-2">-10s</button>
+                        <span class="text-blue-300 text-xs uppercase tracking-widest font-bold">Adjust Time</span>
+                        <button onclick="adjustResTimer(10)" class="text-yellow-500 font-bold hover:text-yellow-300 transition px-2">+10s</button>
+                    </div>
+                    <div class="flex justify-center gap-3">
+                        <button onclick="startResTimer()" class="bg-yellow-600 hover:bg-yellow-500 text-black px-8 py-2 rounded font-bold transition">Start</button>
+                        <button onclick="pauseResTimer()" class="bg-blue-600 hover:bg-blue-500 text-white px-8 py-2 rounded font-bold transition">Pause</button>
+                        <button onclick="resetResTimer()" class="bg-red-800 hover:bg-red-700 text-white px-8 py-2 rounded font-bold transition">Reset</button>
+                    </div>
+                </div>
+
+                <div class="text-center mb-6">
+                    <p class="text-blue-200 text-sm italic">Press Start to open the floor and match the related political terms!</p>
+                </div>
+                <div id="res-grid" class="grid grid-cols-4 md:grid-cols-4 gap-3 md:gap-4 max-w-4xl mx-auto opacity-50 pointer-events-none transition-opacity duration-300">
+                    </div>
+            </div>
+        </div>
+
+        <div id="view-defuse" class="view">
+            <div class="glass gold-border rounded-3xl p-6 md:p-10 relative max-w-3xl mx-auto text-center">
+                <div class="flex justify-between items-center mb-6">
+                    <button onclick="showView('dashboard')" class="text-yellow-500 hover:text-yellow-300 font-bold tracking-widest text-sm uppercase">← Back</button>
+                    <div class="text-2xl font-display text-red-500" id="bomb-stage">Crisis 1 of 5</div>
+                </div>
+
+                <div id="bomb-container" class="relative bg-slate-900 border-4 border-slate-700 p-8 rounded-3xl shadow-2xl mb-8 max-w-lg mx-auto">
+                    <div class="absolute -top-6 left-1/2 transform -translate-x-1/2 w-16 h-8 bg-slate-600 rounded-t-lg border-2 border-b-0 border-slate-500 flex items-center justify-center">
+                        <div class="w-10 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                    </div>
+                    
+                    <div class="bg-black border-4 border-slate-800 p-4 rounded-xl mb-6 flex justify-center items-center shadow-inner">
+                        <span id="bomb-timer" class="text-6xl font-mono font-bold text-red-500 tracking-widest animate-pulse-fast drop-shadow-[0_0_10px_rgba(225,29,72,0.8)]">60.0</span>
+                    </div>
+
+                    <div class="bg-black/40 p-6 rounded-xl border border-yellow-500/30 mb-8 min-h-[140px] flex items-center justify-center shadow-inner">
+                        <p id="bomb-question" class="text-xl md:text-2xl font-medium text-white leading-relaxed font-display italic"></p>
+                    </div>
+
+                    <p class="text-blue-300 text-xs font-bold uppercase tracking-widest mb-4">Select the correct word to pass the bill:</p>
+                    <div id="bomb-wires" class="flex flex-col gap-4">
+                        </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-sentence" class="view">
+            <div class="glass gold-border rounded-3xl p-6 md:p-10 relative max-w-5xl mx-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <button onclick="showView('dashboard')" class="text-yellow-500 hover:text-yellow-300 font-bold tracking-widest text-sm uppercase">← Back</button>
+                    <div class="text-2xl font-display text-blue-300">Debate Clash</div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 md:gap-8 mb-10">
+                    <div class="bg-slate-900/80 border border-slate-700 rounded-xl p-4 text-center shadow-lg relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-2 bg-blue-500"></div>
+                        <h3 class="text-blue-400 font-display text-2xl mb-1 mt-2">LEFT WING</h3>
+                        <div class="text-6xl font-black text-white mb-4 font-display" id="team1-score">0</div>
+                        <div class="flex justify-center gap-2">
+                            <button onclick="updateTeamScore(1, -5)" class="bg-slate-800 text-white w-12 h-12 rounded border border-slate-600 hover:bg-slate-700 transition font-bold text-xl">-</button>
+                            <button onclick="updateTeamScore(1, 10)" class="bg-blue-700 text-white w-12 h-12 rounded border border-blue-500 hover:bg-blue-600 transition font-bold text-xl">+</button>
+                        </div>
+                    </div>
+                    <div class="bg-slate-900/80 border border-slate-700 rounded-xl p-4 text-center shadow-lg relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-2 bg-red-500"></div>
+                        <h3 class="text-red-400 font-display text-2xl mb-1 mt-2">RIGHT WING</h3>
+                        <div class="text-6xl font-black text-white mb-4 font-display" id="team2-score">0</div>
+                        <div class="flex justify-center gap-2">
+                            <button onclick="updateTeamScore(2, -5)" class="bg-slate-800 text-white w-12 h-12 rounded border border-slate-600 hover:bg-slate-700 transition font-bold text-xl">-</button>
+                            <button onclick="updateTeamScore(2, 10)" class="bg-red-700 text-white w-12 h-12 rounded border border-red-500 hover:bg-red-600 transition font-bold text-xl">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-black/30 border border-yellow-500/20 rounded-xl p-6 mb-8 text-center max-w-md mx-auto shadow-inner">
+                    <div class="text-6xl font-display text-white mb-4 tracking-widest" id="sn-timer-display">01:00</div>
+                    <div class="flex justify-center items-center gap-4 mb-6">
+                        <button onclick="adjustSnTimer(-10)" class="text-yellow-500 hover:text-yellow-300 text-lg font-bold px-2">-10s</button>
+                        <span class="text-blue-400 text-xs uppercase tracking-widest font-bold">Adjust Time</span>
+                        <button onclick="adjustSnTimer(10)" class="text-yellow-500 hover:text-yellow-300 text-lg font-bold px-2">+10s</button>
+                    </div>
+                    <div class="flex justify-center gap-3">
+                        <button onclick="startSnTimer()" class="bg-emerald-700 hover:bg-emerald-600 text-white font-bold py-3 px-8 rounded uppercase tracking-wider transition">Start</button>
+                        <button onclick="pauseSnTimer()" class="bg-yellow-700 hover:bg-yellow-600 text-white font-bold py-3 px-8 rounded uppercase tracking-wider transition">Pause</button>
+                        <button onclick="resetSnTimer()" class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 px-8 rounded uppercase tracking-wider transition">Reset</button>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <p class="text-blue-300 font-bold uppercase tracking-widest text-sm mb-6">Debate prompt: Create a logical sentence connecting these exactly 2 words:</p>
+                    <div id="sn-words-container" class="flex flex-col md:flex-row flex-wrap justify-center gap-6 mb-8 items-center min-h-[5rem]"></div>
+                    
+                    <div class="mb-10 max-w-3xl mx-auto">
+                        <button onclick="toggleSentenceExample()" class="text-sm font-bold text-yellow-500 hover:text-white border border-yellow-500/50 px-4 py-2 rounded-full transition mb-4">Speaker: Reveal Example Argument</button>
+                        <div id="sn-example-box" class="hidden bg-slate-900/80 border border-yellow-500/50 p-6 rounded-xl shadow-inner">
+                            <p class="text-yellow-300 font-bold text-xs uppercase tracking-widest mb-3">Meaningful Political Context:</p>
+                            <p id="sn-example-text" class="text-white text-2xl font-display italic"></p>
+                        </div>
+                    </div>
+
+                    <button onclick="nextSentenceWords()" class="bg-gradient-to-r from-yellow-600 to-yellow-800 hover:from-yellow-500 hover:to-yellow-700 text-white font-display font-bold text-2xl py-5 px-12 rounded-full shadow-lg transition-all border border-yellow-400/50">Draw Target Words ⚖️</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-jeopardy" class="view">
+            <div class="glass gold-border rounded-3xl p-6 md:p-8 relative max-w-6xl mx-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <button onclick="showView('dashboard')" class="text-yellow-500 hover:text-yellow-300 font-bold tracking-widest text-sm uppercase">← Back</button>
+                    <div class="text-4xl font-display text-white">Political Jeopardy</div>
+                    <div class="flex gap-6">
+                        <div class="text-2xl font-bold text-blue-400 font-display">Left: <span id="jeop-score-a" class="text-white">0</span></div>
+                        <div class="text-2xl font-bold text-red-400 font-display">Right: <span id="jeop-score-b" class="text-white">0</span></div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-700 shadow-md flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
+                    <div class="flex items-center gap-4">
+                        <span class="text-blue-300 text-sm font-bold uppercase tracking-widest">Game Mode:</span>
+                        <button id="jeop-mode-btn" onclick="toggleJeopMode()" class="bg-emerald-700 hover:bg-emerald-600 text-white px-5 py-2 rounded-lg font-bold transition shadow-md border border-emerald-500">Normal (Safe)</button>
+                        <span id="jeop-mode-desc" class="text-xs text-slate-400 italic hidden md:inline">Wrong answers do not lose points.</span>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 p-3 rounded-xl border-2 border-slate-700 shadow-2xl overflow-x-auto">
+                    <div id="jeopardy-board"></div>
+                </div>
+
+                <div id="jeop-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+                    <div class="bg-slate-900 p-8 md:p-12 rounded-3xl border-2 border-yellow-600 max-w-4xl w-full text-center relative shadow-2xl">
+                        
+                        <div class="flex flex-col md:flex-row justify-between items-center mb-8 border-b border-slate-700 pb-6 gap-4">
+                            <h3 id="jeop-cat-val" class="text-yellow-400 font-display text-3xl uppercase tracking-widest"></h3>
+                        </div>
+
+                        <p id="jeop-q-text" class="text-white text-3xl md:text-5xl font-display italic mb-12 leading-relaxed"></p>
+                        
+                        <div id="jeop-answer-area" class="hidden">
+                            <p class="text-emerald-400 text-sm font-bold uppercase tracking-widest mb-2">Correct Answer:</p>
+                            <p id="jeop-a-text" class="text-white text-3xl mb-12 font-medium"></p>
+                            
+                            <p class="text-blue-300 text-xs font-bold uppercase mb-4 tracking-widest">Award Points To:</p>
+                            <div class="flex flex-wrap justify-center gap-4">
+                                <div class="flex flex-col gap-2">
+                                    <button onclick="awardJeopardy(1, true)" class="bg-blue-800 hover:bg-blue-700 border border-blue-500 text-white font-bold py-3 px-8 rounded-xl transition text-lg w-full">+ Left Wing</button>
+                                    <button onclick="awardJeopardy(1, false)" class="jeop-risky-btn hidden bg-blue-900/50 hover:bg-blue-800 border border-blue-800 text-blue-300 font-bold py-2 px-8 rounded-xl transition text-sm w-full">- Left Wing</button>
+                                </div>
+                                
+                                <div class="flex flex-col gap-2">
+                                    <button onclick="awardJeopardy(2, true)" class="bg-red-800 hover:bg-red-700 border border-red-500 text-white font-bold py-3 px-8 rounded-xl transition text-lg w-full">+ Right Wing</button>
+                                    <button onclick="awardJeopardy(2, false)" class="jeop-risky-btn hidden bg-red-900/50 hover:bg-red-800 border border-red-800 text-red-300 font-bold py-2 px-8 rounded-xl transition text-sm w-full">- Right Wing</button>
+                                </div>
+                                
+                                <div class="flex flex-col gap-2 justify-start">
+                                    <button onclick="awardJeopardy(0, true)" class="bg-slate-700 hover:bg-slate-600 border border-slate-500 text-white font-bold py-3 px-8 rounded-xl transition text-lg h-full">Nobody</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-center gap-6 mt-10">
+                            <button id="jeop-reveal-btn" onclick="document.getElementById('jeop-answer-area').classList.remove('hidden'); this.classList.add('hidden');" class="bg-yellow-700 hover:bg-yellow-600 text-black font-bold py-4 px-12 rounded-xl transition text-2xl shadow-lg font-display tracking-widest flex-1 max-w-sm">Reveal Answer</button>
+                            <button onclick="cancelJeopardy()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 px-8 rounded-xl transition text-sm uppercase tracking-widest border border-slate-600">Go Back / Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-millionaire" class="view">
+            <div class="glass gold-border rounded-3xl p-6 md:p-10 relative max-w-6xl mx-auto">
+                <div class="flex justify-between items-center mb-8">
+                    <button onclick="showView('dashboard')" class="text-yellow-500 hover:text-yellow-300 font-bold tracking-widest text-sm uppercase">← Back</button>
+                    <div class="text-3xl font-display text-yellow-400">Campaign Trail Trivia</div>
+                </div>
+
+                <div class="grid lg:grid-cols-3 gap-10">
+                    <div class="lg:col-span-2 flex flex-col justify-end">
+                        <div class="bg-slate-900 border-2 border-yellow-500/50 rounded-2xl p-10 mb-8 shadow-xl relative min-h-[250px] flex items-center justify-center text-center">
+                            <div id="mil-timer-display" class="hidden absolute top-4 right-4 bg-red-600/20 border-2 border-red-500 text-red-400 w-14 h-14 rounded-full flex items-center justify-center text-2xl font-mono font-bold shadow-[0_0_15px_rgba(225,29,72,0.4)]">15</div>
+                            <h3 id="mil-q-text" class="text-2xl md:text-4xl text-white font-display italic leading-relaxed"></h3>
+                        </div>
+
+                        <div class="flex justify-center gap-4 mb-6">
+                            <button id="btn-5050" onclick="use5050()" class="bg-yellow-600 hover:bg-yellow-500 text-black font-bold py-3 px-8 rounded-full border-2 border-yellow-300 shadow-lg transition-all text-sm tracking-widest uppercase">50 / 50</button>
+                            <button id="btn-audience" onclick="useAudience()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-full border-2 border-blue-300 shadow-lg transition-all text-sm tracking-widest uppercase">Ask Pollsters</button>
+                        </div>
+                        
+                        <div id="mil-audience-poll" class="hidden bg-blue-900/40 border border-blue-500/50 p-5 rounded-xl mb-6 text-white text-sm font-medium shadow-inner"></div>
+
+                        <div id="mil-options" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-700 rounded-2xl p-8 shadow-inner text-right font-display text-xl tracking-wider flex flex-col justify-end gap-3" id="mil-ladder">
+                        <div class="ladder-step py-1 px-4" data-level="9">President of the World</div>
+                        <div class="ladder-step py-1 px-4" data-level="8">President</div>
+                        <div class="ladder-step py-1 px-4" data-level="7">Vice President</div>
+                        <div class="ladder-step py-1 px-4" data-level="6">Senator</div>
+                        <div class="ladder-step py-1 px-4" data-level="5">Governor</div>
+                        <div class="ladder-step py-1 px-4" data-level="4">Congressperson</div>
+                        <div class="ladder-step py-1 px-4" data-level="3">State Representative</div>
+                        <div class="ladder-step py-1 px-4" data-level="2">Mayor</div>
+                        <div class="ladder-step py-1 px-4" data-level="1">City Council</div>
+                        <div class="ladder-step py-1 px-4" data-level="0">School Board</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-baamboozle" class="view">
+            <div class="glass gold-border rounded-3xl p-6 md:p-8 relative max-w-6xl mx-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <button onclick="showView('dashboard')" class="text-yellow-500 hover:text-yellow-300 font-bold tracking-widest text-sm uppercase">← Back</button>
+                    <div class="text-4xl font-display text-yellow-400">Gridlock</div>
+                    <div class="flex gap-6">
+                        <div class="text-2xl font-bold text-blue-400 font-display">Left: <span id="bbz-score-a" class="text-white">0</span></div>
+                        <div class="text-2xl font-bold text-red-400 font-display">Right: <span id="bbz-score-b" class="text-white">0</span></div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 p-4 rounded-xl border-2 border-slate-700 shadow-2xl">
+                    <div id="bbz-board" class="grid grid-cols-4 md:grid-cols-6 gap-3"></div>
+                </div>
+
+                <div id="bbz-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+                    <div class="bg-slate-900 p-8 md:p-12 rounded-3xl border-2 border-yellow-600 max-w-4xl w-full text-center relative shadow-2xl">
+                        
+                        <div id="bbz-q-area" class="hidden">
+                            <div class="flex flex-col md:flex-row justify-between items-center mb-8 border-b border-slate-700 pb-4 gap-4">
+                                <h3 class="text-yellow-400 font-display text-2xl uppercase tracking-widest">Question</h3>
+                                <div class="flex items-center gap-3 bg-black/60 p-2 rounded-xl border border-slate-600">
+                                    <button onclick="adjustBbzTimer(-5)" class="text-yellow-500 hover:text-yellow-300 font-bold px-2 text-lg">-5s</button>
+                                    <span id="bbz-timer-display" class="text-3xl font-mono text-red-400 font-bold w-16 text-center">30</span>
+                                    <button onclick="adjustBbzTimer(5)" class="text-yellow-500 hover:text-yellow-300 font-bold px-2 text-lg">+5s</button>
+                                    <div class="border-l border-slate-600 pl-3 flex gap-2">
+                                        <button onclick="pauseBbzTimer()" id="bbz-pause-btn" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded text-sm font-bold transition">Pause</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <p id="bbz-q-text" class="text-white text-4xl md:text-5xl font-display italic mb-12 leading-relaxed"></p>
+                            
+                            <div id="bbz-answer-area" class="hidden">
+                                <p class="text-yellow-400 text-sm font-bold uppercase tracking-widest mb-2">Answer:</p>
+                                <p id="bbz-a-text" class="text-white text-3xl mb-12 font-medium"></p>
+                                
+                                <p class="text-blue-300 text-xs font-bold uppercase mb-4 tracking-widest">Did they get it right?</p>
+                                <div class="flex justify-center gap-4">
+                                    <button onclick="resolveBbz(1)" class="bg-blue-800 hover:bg-blue-700 border border-blue-500 text-white font-bold py-4 px-10 rounded-xl transition text-xl shadow-md">+25 Left</button>
+                                    <button onclick="resolveBbz(2)" class="bg-red-800 hover:bg-red-700 border border-red-500 text-white font-bold py-4 px-10 rounded-xl transition text-xl shadow-md">+25 Right</button>
+                                    <button onclick="resolveBbz(0)" class="bg-slate-700 hover:bg-slate-600 border border-slate-500 text-white font-bold py-4 px-10 rounded-xl transition text-xl shadow-md">Incorrect (Nobody)</button>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-center gap-6 mt-10">
+                                <button id="bbz-reveal-btn" onclick="document.getElementById('bbz-answer-area').classList.remove('hidden'); this.classList.add('hidden'); pauseBbzTimer();" class="bg-yellow-700 hover:bg-yellow-600 text-black font-bold py-4 px-12 rounded-xl transition text-2xl shadow-lg font-display tracking-widest flex-1 max-w-sm">Reveal Answer</button>
+                                <button onclick="cancelBbz()" class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-4 px-8 rounded-xl transition text-sm uppercase tracking-widest border border-slate-500">Cancel</button>
+                            </div>
+                        </div>
+
+                        <div id="bbz-p-area" class="hidden">
+                            <h3 id="bbz-p-title" class="text-5xl md:text-6xl font-display text-yellow-400 mb-8 uppercase tracking-widest animate-pulse"></h3>
+                            <p id="bbz-p-desc" class="text-white text-3xl mb-16 font-medium italic"></p>
+                            
+                            <p class="text-blue-300 text-sm font-bold uppercase mb-6 tracking-widest">Which team picked this tile?</p>
+                            <div class="flex justify-center gap-6">
+                                <button onclick="resolveBbz(1)" class="bg-blue-800 hover:bg-blue-700 border border-blue-500 text-white font-bold py-5 px-12 rounded-xl transition text-2xl shadow-[0_0_20px_rgba(30,58,138,0.6)]">Apply to Left</button>
+                                <button onclick="resolveBbz(2)" class="bg-red-800 hover:bg-red-700 border border-red-500 text-white font-bold py-5 px-12 rounded-xl transition text-2xl shadow-[0_0_20px_rgba(159,18,57,0.6)]">Apply to Right</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-tycoon-setup" class="view text-center">
+            <div class="glass gold-border rounded-3xl p-10 max-w-4xl mx-auto animate-pop-in">
+                <button onclick="showView('dashboard')" class="text-yellow-500 hover:text-yellow-300 font-bold tracking-widest text-sm uppercase absolute top-6 left-6">← Back</button>
+                <h2 class="text-4xl font-display text-yellow-400 mb-2 mt-4">Campaign Setup</h2>
+                <p class="text-slate-300 mb-8">Choose your political tokens before entering the Tycoon Board.</p>
+                <div class="grid md:grid-cols-2 gap-8 mb-10">
+                    <div class="bg-blue-900/40 p-6 rounded-2xl border-2 border-blue-500/50">
+                        <h3 class="text-blue-400 font-display text-2xl mb-4">Left Wing Token</h3>
+                        <div class="text-7xl mb-4 h-24 flex items-center justify-center filter drop-shadow-lg" id="setup-token-a">🫏</div>
+                        <div class="flex flex-wrap justify-center gap-2 max-w-xs mx-auto" id="setup-grid-a"></div>
+                    </div>
+                    <div class="bg-red-900/40 p-6 rounded-2xl border-2 border-red-500/50">
+                        <h3 class="text-red-400 font-display text-2xl mb-4">Right Wing Token</h3>
+                        <div class="text-7xl mb-4 h-24 flex items-center justify-center filter drop-shadow-lg" id="setup-token-b">🐘</div>
+                        <div class="flex flex-wrap justify-center gap-2 max-w-xs mx-auto" id="setup-grid-b"></div>
+                    </div>
+                </div>
+                <button onclick="confirmTycoonSetup()" class="bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-black font-bold text-2xl py-4 px-12 rounded-full shadow-lg hover:scale-105 transition border border-yellow-300">Start Campaign</button>
+            </div>
+        </div>
+
+        <div id="view-tycoon" class="view">
+            <div class="glass gold-border rounded-3xl p-6 md:p-10 relative max-w-6xl mx-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <button onclick="showView('dashboard')" class="text-yellow-500 hover:text-yellow-300 font-bold tracking-widest text-sm uppercase flex items-center gap-2">← Back to Hub</button>
+                    <div class="text-3xl font-display text-yellow-400">Political Tycoon</div>
+                </div>
+
+                <div class="grid lg:grid-cols-4 gap-8">
+                    <div class="lg:col-span-1 space-y-6">
+                        <div class="bg-blue-900/60 border-2 border-blue-500/50 p-6 rounded-2xl shadow-lg relative overflow-hidden transition-all" id="tyc-panel-0">
+                            <div class="absolute top-0 left-0 w-2 h-full bg-blue-500"></div>
+                            <h3 class="text-blue-300 font-display text-xl mb-1 uppercase tracking-widest flex items-center justify-between">
+                                <span>Left Wing</span>
+                                <div id="tyc-p0-icon" class="bg-black/30 rounded-full w-10 h-10 flex items-center justify-center border border-blue-400/50 shadow-inner text-xl">🫏</div>
+                            </h3>
+                            <div class="text-4xl font-black text-white font-mono mt-2">$<span id="tyc-score-0">1500</span></div>
+                        </div>
+                        
+                        <div class="bg-red-900/60 border-2 border-red-500/50 p-6 rounded-2xl shadow-lg relative overflow-hidden opacity-50 transition-all" id="tyc-panel-1">
+                            <div class="absolute top-0 left-0 w-2 h-full bg-red-500"></div>
+                            <h3 class="text-red-300 font-display text-xl mb-1 uppercase tracking-widest flex items-center justify-between">
+                                <span>Right Wing</span>
+                                <div id="tyc-p1-icon" class="bg-black/30 rounded-full w-10 h-10 flex items-center justify-center border border-red-400/50 shadow-inner text-xl">🐘</div>
+                            </h3>
+                            <div class="text-4xl font-black text-white font-mono mt-2">$<span id="tyc-score-1">1500</span></div>
+                        </div>
+
+                        <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-600 text-sm text-slate-300 shadow-inner">
+                            <h4 class="font-bold text-yellow-400 mb-2 uppercase tracking-widest border-b border-slate-700 pb-1">Rules of Government</h4>
+                            <ul class="list-disc pl-4 space-y-1">
+                                <li><strong>Unowned Office:</strong> Answer correctly to claim. Values increase!</li>
+                                <li><strong>Owned Office:</strong> Land here and pay Lobbying Fees to the owner.</li>
+                                <li><strong>Breaking News:</strong> Draw a mystery card.</li>
+                                <li>Go bankrupt? You lose the election!</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-3 relative">
+                        <div class="tycoon-board bg-white/5 p-2 rounded-2xl backdrop-blur-md border border-white/10 shadow-2xl" id="tycoon-board-grid">
+                            <div class="tycoon-center text-center relative z-0">
+                                <h3 class="text-3xl font-display text-white mb-2 tracking-widest uppercase drop-shadow-md" id="tyc-turn-indicator">Left Wing's Turn</h3>
+                                <p class="text-blue-300 text-sm mb-6 italic" id="tyc-status-text">Ready to campaign.</p>
+                                
+                                <div class="bg-slate-100 text-slate-900 w-24 h-24 rounded-3xl flex items-center justify-center text-6xl font-black shadow-[0_10px_0_#475569] mb-8 border-4 border-slate-300" id="tyc-dice-display">
+                                    🗳️
+                                </div>
+
+                                <button onclick="rollTycoonDice()" id="tyc-roll-btn" class="bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-black font-bold py-4 px-10 rounded-full text-2xl shadow-lg transition-transform transform hover:-translate-y-1 border border-yellow-300 tracking-widest">
+                                    CAST BALLOT
+                                </button>
+                            </div>
+
+                            <div id="token-0" class="player-token">🫏</div>
+                            <div id="token-1" class="player-token">🐘</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tyc-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+                    <div class="bg-slate-900 p-8 md:p-12 rounded-3xl border-4 border-yellow-500 max-w-2xl w-full text-center relative shadow-2xl">
+                        <div id="tyc-modal-header" class="text-yellow-400 font-bold uppercase tracking-[0.2em] mb-4 text-sm bg-black/50 py-2 rounded-lg"></div>
+                        <h3 id="tyc-modal-title" class="text-3xl md:text-4xl font-display text-white mb-6"></h3>
+                        <p id="tyc-modal-desc" class="text-xl text-blue-200 mb-8 font-serif leading-relaxed"></p>
+                        
+                        <div id="tyc-options-area" class="grid gap-4 mb-6"></div>
+                        
+                        <div id="tyc-action-area" class="hidden">
+                            </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div id="view-results" class="view text-center">
+            <div class="glass gold-border rounded-3xl p-12 max-w-2xl mx-auto animate-pop-in">
+                <div class="text-8xl mb-8 drop-shadow-lg" id="results-icon">⚖️</div>
+                <h2 class="text-5xl font-display text-yellow-400 mb-4 drop-shadow-md">Term Complete!</h2>
+                
+                <div id="results-message" class="text-2xl text-blue-100 mb-10 font-serif italic"></div>
+                
+                <button onclick="showView('dashboard')" class="w-full bg-slate-800 hover:bg-slate-700 border border-yellow-500/50 text-yellow-400 font-bold py-5 rounded-xl text-xl transition-all tracking-widest uppercase font-display shadow-lg">Back to Capitol</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ==========================================
+        // POLITICAL VOCAB DATA BANK (55 Words)
+        // ==========================================
+        const vocabData = [
+            { word: "Fascist", def: "An authoritarian and nationalistic right-wing system of government." },
+            { word: "Reformist", def: "A person who advocates for gradual political changes rather than absolute revolution." },
+            { word: "Populist", def: "A politician who appeals to ordinary people who feel disregarded by elite groups." },
+            { word: "Socialist", def: "Someone who advocates that the means of production should be owned by the community." },
+            { word: "Republican", def: "A person supporting a state without a monarch." },
+            { word: "Monarchy", def: "A form of government with a king or queen at the head." },
+            { word: "Theocracy", def: "A system of government in which religious leaders rule in the name of God." },
+            { word: "Caliphate", def: "The rule or reign of a chief Muslim ruler." },
+            { word: "Oligarchy", def: "A small group of people having control of a country or institution." },
+            { word: "Democrat", def: "An advocate or supporter of democracy." },
+            { word: "Rebel", def: "A person who rises in armed resistance against an established government." },
+            { word: "Pacifist", def: "A person who believes that war and violence are unjustifiable." },
+            { word: "Liberalist", def: "A supporter of policies that are socially progressive and promote liberty." },
+            { word: "Anarchist", def: "A person who believes in or tries to bring about the absence of government." },
+            { word: "Revolutionist", def: "A person who advocates or engages in political revolution." },
+            { word: "Communist", def: "A person who supports the principles of communism." },
+            { word: "Conservative", def: "A person who is averse to change and holds to traditional values." },
+            { word: "Welfare", def: "Statutory procedure or social effort designed to promote basic physical well-being." },
+            { word: "Judgement", def: "The ability to make considered decisions or come to sensible conclusions." },
+            { word: "Aptitude", def: "A natural ability to do something." },
+            { word: "Basis", def: "The underlying support or foundation for an idea or argument." },
+            { word: "Labour", def: "Work, especially hard physical work, often represented by unions." },
+            { word: "Means", def: "An action or system by which a result is brought about." },
+            { word: "Accumulation", def: "The acquisition or gradual gathering of wealth or resources." },
+            { word: "Dynasty", def: "A line of hereditary rulers of a country." },
+            { word: "Legislation", def: "Laws, considered collectively." },
+            { word: "Regards", def: "Consider or think of someone or something in a specified way." },
+            { word: "Obliges", def: "Make someone legally or morally bound to an action." },
+            { word: "Holds", def: "Maintain or state as a theory or belief." },
+            { word: "Coalition", def: "A temporary alliance of political parties forming a government." },
+            { word: "Ruling", def: "The exercise of authority or control, or a legal decision." },
+            { word: "Opposition", def: "A political party or group opposing the government." },
+            { word: "Alleges", def: "Claim or assert that someone has done something illegal or wrong." },
+            { word: "Constituency", def: "A body of voters in a specified area who elect a representative." },
+            { word: "Recession", def: "A period of temporary economic decline." },
+            { word: "Custodians", def: "A person who has responsibility for or looks after something." },
+            { word: "Voters", def: "A person who has the right to vote in an election." },
+            { word: "Rulers", def: "A person exercising government or dominion." },
+            { word: "Subjects", def: "A member of a state owing allegiance to a monarch." },
+            { word: "Ballots", def: "A process of voting, in writing and typically in secret." },
+            { word: "Suffrage", def: "The right to vote in political elections." },
+            { word: "Constituents", def: "A voting member of a community having the power to elect." },
+            { word: "Wing", def: "A faction or side of a political party." },
+            { word: "Edge", def: "An advantage over others." },
+            { word: "Dignity", def: "The state or quality of being worthy of honor or respect." },
+            { word: "Policy", def: "A course or principle of action adopted by a government or party." },
+            { word: "Value", def: "The importance, worth, or usefulness of something." },
+            { word: "Appropriation", def: "Money allocated by a legislature for a specific purpose." },
+            { word: "Presidency", def: "The office of the president." },
+            { word: "Majority", def: "The greater number, usually over 50%." },
+            { word: "Minority", def: "The smaller number or part." },
+            { word: "Formation", def: "The action of forming or process of being formed." },
+            { word: "Ministry", def: "A government department headed by a minister of state." },
+            { word: "Union", def: "The action of joining together, often for workers' rights." },
+            { word: "Candidates", def: "A person who applies for a job or is nominated for election." }
+        ];
+
+        const memoryPairsData = [
+            { id: 1, text: "Monarchy" }, { id: 1, text: "Dynasty" },
+            { id: 2, text: "Voters" }, { id: 2, text: "Constituents" },
+            { id: 3, text: "Coalition" }, { id: 3, text: "Union" },
+            { id: 4, text: "Legislation" }, { id: 4, text: "Policy" },
+            { id: 5, text: "Suffrage" }, { id: 5, text: "Ballots" },
+            { id: 6, text: "Majority" }, { id: 6, text: "Ruling" },
+            { id: 7, text: "Minority" }, { id: 7, text: "Opposition" },
+            { id: 8, text: "Rebel" }, { id: 8, text: "Revolutionist" }
+        ];
+
+        const bombQuestions = [
+            { q: "The new ____ will affect all taxpayers next year.", a: "legislation", w1: "constituency", w2: "dignity" },
+            { q: "To win the election, you must secure the ____ of votes.", a: "majority", w1: "minority", w2: "recession" },
+            { q: "The two rival parties formed a temporary ____ to pass the law.", a: "coalition", w1: "accumulation", w2: "aptitude" },
+            { q: "Women fought for decades to earn the right of ____.", a: "suffrage", w1: "welfare", w2: "appropriation" },
+            { q: "The government provided ____ programs to help the poor during the crisis.", a: "welfare", w1: "ministry", w2: "wing" },
+            { q: "A king's followers are often referred to as his loyal ____.", a: "subjects", w1: "rulers", w2: "custodians" },
+            { q: "The ____ party constantly argued against the president's decisions.", a: "opposition", w1: "formation", w2: "basis" },
+            { q: "Due to the deep ____, unemployment reached record highs.", a: "recession", w1: "theocracy", w2: "aptitude" },
+            { q: "He lacked the basic ____ required to run a massive government office.", a: "aptitude", w1: "oligarchy", w2: "caliphate" },
+            { q: "The politician made promises to her ____ to win their votes.", a: "constituency", w1: "appropriation", w2: "accumulation" }
+        ];
+
+        const sentenceGroups = [
+            { words: ["Rebel", "Monarchy"], example: "The rebel army marched against the cruel monarchy to demand freedom." },
+            { words: ["Coalition", "Formation"], example: "The formation of the new coalition government took three weeks of negotiation." },
+            { words: ["Constituency", "Candidates"], example: "The candidates debated fiercely to win over the local constituency." },
+            { words: ["Recession", "Welfare"], example: "During the economic recession, the need for state welfare programs skyrocketed." },
+            { words: ["Legislation", "Suffrage"], example: "The historical legislation finally granted universal suffrage to all adult citizens." },
+            { words: ["Oligarchy", "Opposition"], example: "The wealthy oligarchy brutally silenced any political opposition." },
+            { words: ["Populist", "Majority"], example: "The populist leader promised to return power to the silent majority." },
+            { words: ["Appropriation", "Ministry"], example: "The Ministry of Defense requested a massive budget appropriation for the new ships." },
+            { words: ["Conservative", "Policy"], example: "The conservative senator argued against the progressive tax policy." },
+            { words: ["Pacifist", "Rebel"], example: "Although he hated the government, the pacifist refused to join the violent rebel group." }
+        ];
+
+        const jeopardyCategories = [
+            {
+                name: "Who Rules?",
+                questions: [
+                    { q: "A government headed by a king, queen, or emperor.", a: "What is a Monarchy?" },
+                    { q: "A system where priests rule in the name of God.", a: "What is a Theocracy?" },
+                    { q: "A small group of elite or wealthy people having control.", a: "What is an Oligarchy?" },
+                    { q: "The rule or reign of a chief Muslim leader.", a: "What is a Caliphate?" }
+                ]
+            },
+            {
+                name: "The Electorate",
+                questions: [
+                    { q: "The constitutional right to vote in political elections.", a: "What is Suffrage?" },
+                    { q: "The body of voters in a specified area who elect a representative.", a: "What is a Constituency?" },
+                    { q: "The secret papers or system used to cast a vote.", a: "What are Ballots?" },
+                    { q: "Receiving the greater number of votes (over 50%).", a: "What is a Majority?" }
+                ]
+            },
+            {
+                name: "Ideologies",
+                questions: [
+                    { q: "A person who advocates that the community should own the means of production.", a: "What is a Socialist?" },
+                    { q: "Someone averse to change who holds to traditional values.", a: "What is a Conservative?" },
+                    { q: "A person who believes in the complete absence of government.", a: "What is an Anarchist?" },
+                    { q: "An authoritarian and heavily nationalistic right-wing system.", a: "What is Fascist?" }
+                ]
+            },
+            {
+                name: "Political Action",
+                questions: [
+                    { q: "Laws, considered collectively as they are passed.", a: "What is Legislation?" },
+                    { q: "A temporary alliance of political parties forming a government.", a: "What is a Coalition?" },
+                    { q: "To claim or assert that someone has done something illegal.", a: "What is Alleges?" },
+                    { q: "Money officially allocated by a legislature for a specific use.", a: "What is Appropriation?" }
+                ]
+            },
+            {
+                name: "The Economy & State",
+                questions: [
+                    { q: "A period of temporary economic decline and job loss.", a: "What is a Recession?" },
+                    { q: "Efforts designed to promote the basic physical well-being of people in need.", a: "What is Welfare?" },
+                    { q: "Hard physical work, often represented by trade unions.", a: "What is Labour?" },
+                    { q: "A government department headed by a minister of state.", a: "What is a Ministry?" }
+                ]
+            }
+        ];
+
+        const mogulQuestions = [
+            { q: "Which word describes a politician who appeals to ordinary people against elites?", options: ["Oligarch", "Populist", "Pacifist", "Conservative"], ans: 1 },
+            { q: "If you believe war and violence are completely unjustifiable, you are a...", options: ["Fascist", "Revolutionist", "Pacifist", "Republican"], ans: 2 },
+            { q: "A line of hereditary rulers (like a family of kings) is a...", options: ["Ministry", "Coalition", "Dynasty", "Constituency"], ans: 2 },
+            { q: "What does 'Obliges' mean?", options: ["To make someone legally or morally bound", "To ignore a law completely", "To vote in a secret ballot", "To gather wealth slowly"], ans: 0 },
+            { q: "The smaller number or part of a voting group is the...", options: ["Majority", "Appropriation", "Wing", "Minority"], ans: 3 },
+            { q: "People who have the right to vote in an election are called...", options: ["Subjects", "Voters", "Rulers", "Custodians"], ans: 1 },
+            { q: "To 'Reckon' means to...", options: ["Steal from the treasury", "Establish by calculation or believe", "Lead a violent rebellion", "Pass a new law"], ans: 1 },
+            { q: "What is a 'Liberalist' (Liberal)?", options: ["Someone supporting traditional values", "Someone supporting an absolute monarchy", "Someone supporting progressive policies and liberty", "Someone who wants zero government"], ans: 2 },
+            { q: "A course or principle of action adopted by a government is a...", options: ["Dignity", "Policy", "Basis", "Formation"], ans: 1 },
+            { q: "Which word means 'the acquisition or gradual gathering of something'?", options: ["Accumulation", "Recession", "Suffrage", "Judgement"], ans: 0 },
+            { q: "To 'Hold' a theory means to...", options: ["Keep it a secret", "Maintain or state it as a belief", "Throw it away", "Make it illegal"], ans: 1 },
+            { q: "What does 'Aptitude' mean?", options: ["A natural ability to do something", "A period of economic decline", "A tax on the wealthy", "A type of voting ballot"], ans: 0 },
+            { q: "Who are 'Custodians'?", options: ["People who rebel against kings", "People who look after or take responsibility for something", "People running for president", "People who hate change"], ans: 1 },
+            { q: "If a party has an 'Edge', they have...", options: ["Lost the election", "An advantage over others", "A physical border wall", "No money left"], ans: 1 },
+            { q: "A 'Reformist' prefers...", options: ["Violent and immediate revolution", "Gradual political changes", "Giving all power to one king", "Eliminating all taxes"], ans: 1 }
+        ];
+
+        const baamData = [
+            { type: 'q', q: "The state or quality of being worthy of honor or respect.", a: "Dignity" },
+            { type: 'q', q: "A person who applies for a job or is nominated for election.", a: "Candidate" },
+            { type: 'q', q: "A faction or side of a political party.", a: "Wing" },
+            { type: 'q', q: "The underlying support or foundation for an idea or argument.", a: "Basis" },
+            { type: 'q', q: "The action of forming or process of being formed.", a: "Formation" },
+            { type: 'q', q: "Consider or think of someone or something in a specified way.", a: "Regards" },
+            { type: 'q', q: "The office of the president.", a: "Presidency" },
+            { type: 'q', q: "An action or system by which a result is brought about (a method).", a: "Means" },
+            { type: 'q', q: "The ability to make considered decisions or come to sensible conclusions.", a: "Judgement" },
+            { type: 'q', q: "The importance, worth, or usefulness of something.", a: "Value" },
+            { type: 'q', q: "A member of a state owing allegiance to a monarch.", a: "Subject" },
+            { type: 'q', q: "To claim or assert that someone has done something illegal.", a: "Alleges" },
+            { type: 'q', q: "An advocate or supporter of democracy.", a: "Democrat" },
+            { type: 'q', q: "A person who supports the principles of communism.", a: "Communist" },
+            { type: 'q', q: "The exercise of authority or control, or a legal decision.", a: "Ruling" },
+            { type: 'q', q: "A person exercising government or dominion.", a: "Ruler" },
+            { type: 'q', q: "To make someone legally or morally bound to an action.", a: "Obliges" },
+            { type: 'q', q: "A person advocating a state without a monarch.", a: "Republican" },
+
+            // Power-ups
+            { type: 'p', action: 'gain', amount: 50, title: '🌟 Landslide Victory!', desc: 'You swept the swing states! Gain 50 points!' },
+            { type: 'p', action: 'lose', amount: 25, title: '📰 Media Scandal!', desc: 'Leaked photos ruin your poll numbers. Lose 25 points.' },
+            { type: 'p', action: 'steal', amount: 50, title: '🕵️ Opposition Research!', desc: 'You found dirt on the rival candidate. Steal up to 50 points from them.' },
+            { type: 'p', action: 'swap', amount: 0, title: '🔄 Gerrymandering!', desc: 'The district lines were redrawn! Swap scores with the other team.' },
+            { type: 'p', action: 'bankrupt', amount: 0, title: '🔥 Impeachment!', desc: 'You have been removed from office. Score drops to 0.' },
+            { type: 'p', action: 'gain', amount: 100, title: '👑 Supreme Court Nominee!', desc: 'Your judge was approved for life! Gain 100 points!' }
+        ];
+
+        const tycoonSpaces = [
+            { id: 0, name: "ELECTION DAY", type: "corner", icon: "🗳️", col: 1, row: 1 },
+            
+            { id: 1, name: "City Council", type: "prop", color: "#fca5a5", icon: "🏙️", col: 2, row: 1, owner: null, cost: 100, rent: 50 },
+            { id: 2, name: "Breaking News", type: "chance", icon: "📰", col: 3, row: 1 },
+            { id: 3, name: "Mayor's Office", type: "prop", color: "#fca5a5", icon: "🏢", col: 4, row: 1, owner: null, cost: 150, rent: 75 },
+            { id: 4, name: "State Legislature", type: "prop", color: "#fca5a5", icon: "🏛️", col: 5, row: 1, owner: null, cost: 200, rent: 100 },
+            
+            { id: 5, name: "CAMPAIGN SCANDAL", type: "penalty", icon: "📸", col: 6, row: 1 },
+            
+            { id: 6, name: "Governor's Mansion", type: "prop", color: "#93c5fd", icon: "🏡", col: 6, row: 2, owner: null, cost: 250, rent: 125 },
+            { id: 7, name: "Lobbying Fees", type: "tax", icon: "💼", col: 6, row: 3 },
+            { id: 8, name: "Federal Court", type: "prop", color: "#93c5fd", icon: "⚖️", col: 6, row: 4, owner: null, cost: 300, rent: 150 },
+            { id: 9, name: "Breaking News", type: "chance", icon: "📰", col: 6, row: 5 },
+            
+            { id: 10, name: "SWING STATE WIN", type: "bonus", icon: "🎉", col: 6, row: 6 },
+            
+            { id: 11, name: "The Treasury", type: "prop", color: "#86efac", icon: "💰", col: 5, row: 6, owner: null, cost: 350, rent: 175 },
+            { id: 12, name: "Debate Ad Costs", type: "tax", icon: "📺", col: 4, row: 6 },
+            { id: 13, name: "The Pentagon", type: "prop", color: "#86efac", icon: "🛡️", col: 3, row: 6, owner: null, cost: 400, rent: 200 },
+            { id: 14, name: "Supreme Court", type: "prop", color: "#86efac", icon: "👨‍⚖️", col: 2, row: 6, owner: null, cost: 450, rent: 225 },
+            
+            { id: 15, name: "FILIBUSTERED!", type: "penalty", icon: "⏳", col: 1, row: 6 },
+            
+            { id: 16, name: "The Senate", type: "prop", color: "#fde047", icon: "🏛️", col: 1, row: 5, owner: null, cost: 500, rent: 250 },
+            { id: 17, name: "Breaking News", type: "chance", icon: "📰", col: 1, row: 4 },
+            { id: 18, name: "The White House", type: "prop", color: "#fde047", icon: "🦅", col: 1, row: 3, owner: null, cost: 600, rent: 300 },
+            { id: 19, name: "Opposition Tax", type: "tax", icon: "📉", col: 1, row: 2 }
+        ];
+
+        const tycoonQuiz = [
+            { q: "What does 'Legislation' mean?", opts: ["Laws, considered collectively", "A period of economic decline", "A wealthy ruling class"], a: 0 },
+            { q: "If a party forms a 'Coalition', they...", opts: ["Go to war with another country", "Form a temporary alliance to govern", "Abolish the monarchy"], a: 1 },
+            { q: "A 'Recession' is...", opts: ["A period of economic decline", "An advantage over others", "A government welfare program"], a: 0 },
+            { q: "What does 'Suffrage' mean?", opts: ["Extreme pain", "The right to vote", "A type of religious government"], a: 1 },
+            { q: "A 'Constituency' refers to...", opts: ["The President's cabinet", "A body of voters in a specific area", "A written set of rules"], a: 1 },
+            { q: "Which word means 'a faction or side of a political party'?", opts: ["Wing", "Appropriation", "Majority"], a: 0 },
+            { q: "The 'Opposition' is...", opts: ["The ruling president", "The party opposing the government", "The military leaders"], a: 1 },
+            { q: "What does it mean to 'Allege' something?", opts: ["To claim someone did something illegal", "To vote in a secret ballot", "To pass a new tax law"], a: 0 },
+            { q: "An 'Oligarchy' is ruled by...", opts: ["One king or queen", "A small group of elite people", "The entire population equally"], a: 1 },
+            { q: "What is an 'Appropriation'?", opts: ["Money officially allocated by a legislature", "A violent revolution", "A natural ability to lead"], a: 0 }
+        ];
+
+        const tycoonChance = [
+            { title: "Economic Boom!", desc: "Your policies ended the Recession. Voters are thrilled! Collect $200 in donations.", change: 200 },
+            { title: "Scandal Leaked!", desc: "The Opposition alleged you took bribes. Pay $150 in legal fees to clear your name.", change: -150 },
+            { title: "Union Support!", desc: "The massive Labour Union publicly endorsed your campaign. Collect $250!", change: 250 },
+            { title: "Bad Judgement!", desc: "A terrible policy decision cost you voters. You must spend $100 on apology ads.", change: -100 },
+            { title: "Coalition Formed", desc: "You allied with the minority party to gain an Edge in the polls. Collect $150.", change: 150 },
+            { title: "Protests Erupt!", desc: "Rebels and Anarchists are protesting outside your Ministry. Pay $200 for extra security.", change: -200 }
+        ];
+
+        // ==========================================
+        // GLOBAL STATE & UTILS
+        // ==========================================
+        let currentGame = '';
+        let score = 0;
+        let globalTimerInterval;
+
+        function shuffleArray(array) {
+            let curId = array.length;
+            while (0 !== curId) {
+                let randId = Math.floor(Math.random() * curId);
+                curId -= 1;
+                let tmp = array[curId]; array[curId] = array[randId]; array[randId] = tmp;
+            }
+            return array;
+        }
+
+        function showView(viewId) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById('view-' + viewId).classList.add('active');
+            clearInterval(globalTimerInterval); 
+        }
+
+        function startGame(type) {
+            currentGame = type;
+            score = 0;
+            if (type === 'speedrun') initSpeedRun();
+            if (type === 'scrambler') initHangman();
+            if (type === 'sentence') initSentenceGame();
+            if (type === 'jeopardy') initJeopardy();
+            if (type === 'restoration') initRestoration();
+            if (type === 'defuse') initDefuse();
+            if (type === 'millionaire') initMillionaire();
+            if (type === 'baamboozle') initBaamboozle();
+            if (type === 'tycoon') showTycoonSetup();
+        }
+
+        function endGame(message, gifHtml = '') {
+            clearInterval(globalTimerInterval);
+            document.getElementById('results-message').innerHTML = message;
+            if(gifHtml) {
+                document.getElementById('results-message').innerHTML += gifHtml;
+            }
+            showView('results');
+        }
+
+        // ==========================================
+        // GAME 1: POLICY RUSH
+        // ==========================================
+        let srTimeLeft = 60, srCurrentWord = null, srDeck = [];
+        function initSpeedRun() {
+            srTimeLeft = 60; score = 0; srDeck = shuffleArray([...vocabData]);
+            updateSrUI(); showView('speedrun'); nextSrQuestion();
+            globalTimerInterval = setInterval(() => {
+                srTimeLeft--; updateSrUI();
+                if (srTimeLeft <= 0) endGame("Time's up! The legislative session ended.");
+            }, 1000);
+        }
+        function updateSrUI() {
+            document.getElementById('sr-score').textContent = `Votes: ${score}`;
+            document.getElementById('sr-time-text').textContent = srTimeLeft;
+            const bar = document.getElementById('sr-timer-bar');
+            bar.style.width = `${(srTimeLeft / 60) * 100}%`;
+            bar.className = 'timer-bar ' + (srTimeLeft <= 10 ? 'timer-danger' : srTimeLeft <= 20 ? 'timer-warning' : '');
+        }
+        function nextSrQuestion() {
+            const playArea = document.getElementById('sr-play-area');
+            playArea.classList.remove('animate-pop-in'); void playArea.offsetWidth; playArea.classList.add('animate-pop-in');
+            if (srDeck.length === 0) srDeck = shuffleArray([...vocabData]);
+            srCurrentWord = srDeck.pop();
+            
+            const availableWrong = shuffleArray(vocabData.filter(v => v.word !== srCurrentWord.word));
+            const uniqueWrong = []; const seen = new Set([srCurrentWord.word]);
+            for(let w of availableWrong) { if(!seen.has(w.word)) { uniqueWrong.push(w); seen.add(w.word); } if(uniqueWrong.length>=3) break; }
+            const options = shuffleArray([srCurrentWord, ...uniqueWrong]);
+
+            document.getElementById('sr-definition').textContent = `"${srCurrentWord.def}"`;
+            const container = document.getElementById('sr-options'); container.innerHTML = '';
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "bg-slate-800 text-slate-200 border border-slate-600 font-bold py-4 px-6 rounded-xl shadow hover:bg-slate-700 hover:text-white transition-all capitalize font-display tracking-widest text-xl";
+                btn.textContent = opt.word;
+                btn.onclick = () => {
+                    if(opt.word === srCurrentWord.word) {
+                        score+=10; srTimeLeft = Math.min(60, srTimeLeft+2);
+                        btn.className = "bg-emerald-600 text-white font-bold py-4 px-6 rounded-xl shadow capitalize font-display tracking-widest border border-emerald-400 text-xl";
+                        updateSrUI(); setTimeout(nextSrQuestion, 400);
+                    } else {
+                        score = Math.max(0, score-5); srTimeLeft = Math.max(0, srTimeLeft-3);
+                        btn.className = "bg-red-700 text-white font-bold py-4 px-6 rounded-xl shadow capitalize animate-shake opacity-50 cursor-not-allowed font-display tracking-widest border border-red-500 text-xl";
+                        btn.disabled = true; updateSrUI();
+                        if(srTimeLeft<=0) endGame("Time's up! The legislative session ended.");
+                    }
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        // ==========================================
+        // GAME 2: THE CRYPTOGRAM (Hangman)
+        // ==========================================
+        let scWords = [], scCurrentIndex = 0, scTargetWord = '', scGuessedLetters = new Set(), scLives = 6;
+        const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('');
+        function initHangman() {
+            score = 0; scCurrentIndex = 0;
+            const uniqueSet = []; const seen = new Set();
+            for(let item of shuffleArray([...vocabData])) { if(!seen.has(item.word)){ seen.add(item.word); uniqueSet.push(item); } if(uniqueSet.length>=5) break; }
+            scWords = uniqueSet;
+            showView('scrambler'); loadHangmanLevel();
+        }
+        function loadHangmanLevel() {
+            if (scCurrentIndex >= scWords.length) { 
+                const uniqueSet = []; const seen = new Set();
+                for(let item of shuffleArray([...vocabData])) { if(!seen.has(item.word)){ seen.add(item.word); uniqueSet.push(item); } if(uniqueSet.length>=5) break; }
+                scWords = uniqueSet; scCurrentIndex = 0;
+            }
+            document.getElementById('sc-progress').textContent = `File ${scCurrentIndex + 1} of 5`;
+            document.getElementById('sc-score').textContent = `Score: ${score}`;
+            const obj = scWords[scCurrentIndex]; scTargetWord = obj.word.toUpperCase(); scGuessedLetters.clear(); scLives = 6;
+            document.getElementById('sc-definition').textContent = `"${obj.def}"`;
+            document.getElementById('sc-play-area').classList.remove('animate-pop-in'); void document.getElementById('sc-play-area').offsetWidth; document.getElementById('sc-play-area').classList.add('animate-pop-in');
+            renderHangmanUI();
+        }
+        function renderHangmanUI() {
+            document.getElementById('sc-score').textContent = `Score: ${score}`;
+            const livesDiv = document.getElementById('sc-lives-display'); livesDiv.innerHTML = '';
+            for(let i=0; i<6; i++) { livesDiv.innerHTML += `<span class="${i < scLives ? '' : 'opacity-20 grayscale'}">🗳️</span>`; }
+            const slotsContainer = document.getElementById('sc-target-slots'); slotsContainer.innerHTML = '';
+            let allRevealed = true;
+            for (let char of scTargetWord) {
+                const slot = document.createElement('div');
+                if (char === ' ' || char === '-') { slot.className = "letter-tile empty border-none bg-transparent"; slot.textContent = char; }
+                else if (scGuessedLetters.has(char)) { slot.className = "letter-tile filled"; slot.textContent = char; }
+                else { slot.className = "letter-tile empty"; slot.textContent = ''; allRevealed = false; }
+                slotsContainer.appendChild(slot);
+            }
+            const poolContainer = document.getElementById('sc-letters-pool'); poolContainer.innerHTML = '';
+            ALPHABET.forEach(l => {
+                const btn = document.createElement('button');
+                const isGuessed = scGuessedLetters.has(l);
+                btn.className = `w-10 h-12 m-1 font-bold rounded text-lg transition-all font-display ${isGuessed ? (scTargetWord.includes(l)?'bg-emerald-700 text-white opacity-50 cursor-not-allowed border border-emerald-500':'bg-red-800 text-white opacity-50 cursor-not-allowed border border-red-600') : 'bg-slate-700 text-yellow-100 hover:bg-slate-600 active:scale-95 border border-slate-500'}`;
+                btn.textContent = l; btn.disabled = isGuessed || scLives<=0 || allRevealed;
+                if(!btn.disabled) btn.onclick = () => { 
+                    scGuessedLetters.add(l); 
+                    if(!scTargetWord.includes(l)){ scLives--; score=Math.max(0,score-5); document.getElementById('sc-play-area').classList.add('animate-shake'); setTimeout(()=>document.getElementById('sc-play-area').classList.remove('animate-shake'),400); } else { score+=10; } 
+                    renderHangmanUI(); 
+                };
+                poolContainer.appendChild(btn);
+            });
+            if (allRevealed) {
+                score += 50; Array.from(slotsContainer.children).forEach(s => { if(s.classList.contains('filled')) { s.style.background="linear-gradient(to bottom right, #047857, #15803d)"; s.style.borderColor="#6ee7b7"; s.style.color="#fff"; }});
+                setTimeout(()=>{scCurrentIndex++; loadHangmanLevel();}, 1200);
+            } else if (scLives <= 0) {
+                slotsContainer.innerHTML = '';
+                for (let char of scTargetWord) { const slot = document.createElement('div'); slot.className = "letter-tile filled"; slot.style.background="linear-gradient(to bottom right, #9f1239, #be123c)"; slot.style.borderColor="#fca5a5"; slot.style.color="#fff"; slot.textContent = char; slotsContainer.appendChild(slot); }
+                setTimeout(()=>{scCurrentIndex++; loadHangmanLevel();}, 2000);
+            }
+        }
+        function scramblerHint() {
+            const unrevealed = scTargetWord.split('').filter(char => char !== ' ' && char !== '-' && !scGuessedLetters.has(char));
+            if (unrevealed.length > 0 && scLives > 1) {
+                scGuessedLetters.add(unrevealed[Math.floor(Math.random() * unrevealed.length)]);
+                scLives--; score = Math.max(0, score - 10);
+                document.getElementById('sc-play-area').classList.add('animate-shake'); setTimeout(() => document.getElementById('sc-play-area').classList.remove('animate-shake'), 400);
+                renderHangmanUI();
+            } else if (scLives <= 1) { alert("Not enough ballots left to ask for a hint!"); }
+        }
+        function scramblerReveal() { scTargetWord.split('').forEach(c => scGuessedLetters.add(c)); score = Math.max(0, score - 25); renderHangmanUI(); }
+
+        // ==========================================
+        // GAME 3: BIPARTISAN MATCH (Memory Match)
+        // ==========================================
+        let resFlipped = [], resMatches = 0;
+        let resTimeLeft = 60, resInitial = 60, resIsRunning = false;
+
+        function initRestoration() {
+            resMatches = 0; resFlipped = []; 
+            document.getElementById('res-score').textContent = `Matches: 0 / 8`;
+            resetResTimer();
+            showView('restoration');
+            
+            const grid = document.getElementById('res-grid'); 
+            grid.innerHTML = '';
+            grid.classList.add('opacity-50', 'pointer-events-none');
+            
+            shuffleArray([...memoryPairsData]).forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = "perspective-1000 w-full h-24 md:h-32 cursor-pointer";
+                card.innerHTML = `
+                    <div class="relative w-full h-full transform-style-3d transition-transform duration-500" id="res-card-inner-${index}" data-id="${item.id}">
+                        <div class="absolute w-full h-full backface-hidden bg-gradient-to-br from-slate-700 to-slate-900 rounded-xl border-2 border-yellow-500/50 shadow-lg flex items-center justify-center text-4xl">🏛️</div>
+                        <div class="absolute w-full h-full backface-hidden rotate-y-180 bg-slate-100 rounded-xl border-2 border-yellow-600 shadow-lg flex items-center justify-center p-2 text-center">
+                            <span class="text-slate-900 font-bold font-display ${item.text.length > 10 ? 'text-sm md:text-base' : 'text-lg md:text-xl'} uppercase tracking-wide">${item.text}</span>
+                        </div>
+                    </div>
+                `;
+                card.onclick = () => handleResClick(index);
+                grid.appendChild(card);
+            });
+        }
+
+        function updateResTimerDisplay() {
+            const d = document.getElementById('res-timer-display');
+            d.innerText = `${Math.floor(resTimeLeft/60).toString().padStart(2,'0')}:${(resTimeLeft%60).toString().padStart(2,'0')}`;
+            if(resTimeLeft <= 10 && resTimeLeft > 0) { d.classList.add('text-red-500'); d.classList.remove('text-white'); } 
+            else { d.classList.remove('text-red-500'); d.classList.add('text-white'); }
+        }
+        function adjustResTimer(amt) { 
+            if(!resIsRunning) { resInitial=Math.max(10,resInitial+amt); resTimeLeft=resInitial; updateResTimerDisplay(); } 
+        }
+        function startResTimer() { 
+            if(!resIsRunning && resTimeLeft > 0) { 
+                resIsRunning = true; 
+                document.getElementById('res-grid').classList.remove('opacity-50', 'pointer-events-none');
+                globalTimerInterval = setInterval(() => { 
+                    resTimeLeft--; updateResTimerDisplay(); 
+                    if(resTimeLeft <= 0) { 
+                        clearInterval(globalTimerInterval); resIsRunning = false; 
+                        document.getElementById('res-grid').classList.add('opacity-50', 'pointer-events-none');
+                        endGame("Time's Up! The Senate adjourned."); 
+                    }
+                }, 1000); 
+            } 
+        }
+        function pauseResTimer() { 
+            resIsRunning = false; clearInterval(globalTimerInterval); 
+            document.getElementById('res-grid').classList.add('opacity-50', 'pointer-events-none');
+        }
+        function resetResTimer() { 
+            resIsRunning = false; clearInterval(globalTimerInterval); 
+            resTimeLeft = resInitial; updateResTimerDisplay(); 
+            document.getElementById('res-grid').classList.add('opacity-50', 'pointer-events-none');
+        }
+
+        function handleResClick(index) {
+            if(!resIsRunning) return;
+            const inner = document.getElementById(`res-card-inner-${index}`);
+            if (resFlipped.length >= 2 || inner.classList.contains('rotate-y-180') || inner.classList.contains('matched')) return;
+            
+            inner.classList.add('rotate-y-180'); resFlipped.push({ idx: index, id: inner.dataset.id, el: inner });
+            
+            if (resFlipped.length === 2) {
+                if (resFlipped[0].id === resFlipped[1].id) {
+                    resMatches++; document.getElementById('res-score').textContent = `Matches: ${resMatches} / 8`;
+                    resFlipped.forEach(f => {
+                        f.el.classList.add('matched');
+                        f.el.children[1].classList.remove('bg-slate-100', 'border-yellow-600');
+                        f.el.children[1].classList.add('bg-emerald-200', 'border-emerald-500', 'text-emerald-900');
+                    });
+                    resFlipped = [];
+                    if (resMatches === 8) setTimeout(() => { score=resTimeLeft*10; endGame("Bipartisan Agreement Reached!"); }, 1000);
+                } else {
+                    setTimeout(() => { resFlipped.forEach(f => f.el.classList.remove('rotate-y-180')); resFlipped = []; }, 1000);
+                }
+            }
+        }
+
+        // ==========================================
+        // GAME 4: CRISIS DEFUSE
+        // ==========================================
+        let bombStage = 0, bombTimeLeft = 60, currentBombQ = null, bDeck = [];
+        function initDefuse() {
+            bombStage = 0; bombTimeLeft = 60; 
+            bDeck = shuffleArray([...bombQuestions]); 
+            showView('defuse'); 
+            nextBombStage();
+            
+            clearInterval(globalTimerInterval);
+            globalTimerInterval = setInterval(() => {
+                bombTimeLeft -= 0.1;
+                document.getElementById('bomb-timer').textContent = Math.max(0, bombTimeLeft).toFixed(1);
+                if (bombTimeLeft <= 0) { 
+                    clearInterval(globalTimerInterval); 
+                    endGame("BOOM! The government shut down."); 
+                }
+            }, 100);
+        }
+
+        function nextBombStage() {
+            bombStage++;
+            if (bombStage > 5) { 
+                clearInterval(globalTimerInterval); 
+                score += Math.floor(bombTimeLeft * 10); 
+                endGame("Crisis Averted! The bill was signed into law."); 
+                return; 
+            }
+            
+            document.getElementById('bomb-stage').textContent = `Crisis ${bombStage} of 5`;
+            currentBombQ = bDeck.pop();
+            
+            const qArea = document.getElementById('bomb-question');
+            qArea.classList.remove('animate-pop-in'); void qArea.offsetWidth; qArea.classList.add('animate-pop-in');
+            qArea.innerHTML = currentBombQ.q.replace('____', '<span class="text-yellow-400 font-bold border-b-2 border-yellow-500 px-2">____</span>');
+            
+            const wires = shuffleArray([ {w: currentBombQ.a, c: true}, {w: currentBombQ.w1, c: false}, {w: currentBombQ.w2, c: false} ]);
+            const colors = shuffleArray(["bg-red-600 hover:bg-red-500", "bg-blue-600 hover:bg-blue-500", "bg-emerald-600 hover:bg-emerald-500"]);
+            
+            const container = document.getElementById('bomb-wires'); container.innerHTML = '';
+            
+            wires.forEach((wire, i) => {
+                const btn = document.createElement('button');
+                btn.className = `${colors[i]} text-white font-bold py-4 rounded-lg w-full transition border-b-4 border-black/30 active:border-b-0 active:translate-y-1 uppercase tracking-widest font-display text-lg`;
+                btn.textContent = wire.w;
+                btn.onclick = () => {
+                    if(wire.c) { nextBombStage(); } 
+                    else { 
+                        bombTimeLeft -= 10; 
+                        document.getElementById('bomb-container').classList.add('animate-shake'); 
+                        document.getElementById('bomb-timer').classList.add('text-yellow-400');
+                        setTimeout(() => { document.getElementById('bomb-container').classList.remove('animate-shake'); document.getElementById('bomb-timer').classList.remove('text-yellow-400'); }, 500);
+                        if(bombTimeLeft <= 0) { clearInterval(globalTimerInterval); endGame("BOOM! The government shut down."); }
+                    }
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        // ==========================================
+        // GAME 5: DEBATE CLASH (Sentence Clash)
+        // ==========================================
+        let team1Score = 0, team2Score = 0, snTimeLeft = 60, snInitial = 60, snIsRunning = false;
+        function initSentenceGame() { team1Score=0; team2Score=0; updateScoreboard(); resetSnTimer(); showView('sentence'); nextSentenceWords(); }
+        function updateTeamScore(team, amt) { team===1 ? team1Score=Math.max(0,team1Score+amt) : team2Score=Math.max(0,team2Score+amt); updateScoreboard(); }
+        function updateScoreboard() { document.getElementById('team1-score').innerText = team1Score; document.getElementById('team2-score').innerText = team2Score; }
+        
+        function nextSentenceWords() {
+            const group = sentenceGroups[Math.floor(Math.random()*sentenceGroups.length)];
+            const container = document.getElementById('sn-words-container'); container.innerHTML = '';
+            
+            document.getElementById('sn-example-box').classList.add('hidden');
+            
+            group.words.forEach((word, i) => {
+                container.innerHTML += `
+                    <div class="bg-gradient-to-br from-slate-700 to-slate-900 border border-slate-500 text-yellow-400 px-8 py-5 rounded-xl shadow-xl transform transition hover:scale-105 cursor-default text-center min-w-[200px]">
+                        <span class="text-3xl font-black tracking-widest uppercase font-display">${word}</span>
+                    </div>
+                `;
+                if(i < group.words.length - 1) {
+                    container.innerHTML += `<div class="text-4xl text-slate-500 font-black">+</div>`;
+                }
+            });
+            document.getElementById('sn-example-text').textContent = `"${group.example}"`;
+        }
+
+        function toggleSentenceExample() {
+            const box = document.getElementById('sn-example-box');
+            box.classList.toggle('hidden');
+        }
+
+        function updateSnTimerDisplay() {
+            const d = document.getElementById('sn-timer-display');
+            d.innerText = `${Math.floor(snTimeLeft/60).toString().padStart(2,'0')}:${(snTimeLeft%60).toString().padStart(2,'0')}`;
+            if(snTimeLeft<=10 && snTimeLeft>0) { d.classList.add('text-red-500'); d.classList.remove('text-white'); } else { d.classList.remove('text-red-500'); d.classList.add('text-white'); }
+        }
+        function adjustSnTimer(amt) { if(!snIsRunning) { snInitial=Math.max(10,snInitial+amt); snTimeLeft=snInitial; updateSnTimerDisplay(); } }
+        function startSnTimer() { if(!snIsRunning && snTimeLeft>0) { snIsRunning=true; globalTimerInterval=setInterval(()=>{ snTimeLeft--; updateSnTimerDisplay(); if(snTimeLeft<=0) { clearInterval(globalTimerInterval); snIsRunning=false; const d=document.getElementById('sn-timer-display'); d.innerText="TIME'S UP!"; d.classList.add('text-red-500','animate-shake'); setTimeout(()=>d.classList.remove('animate-shake'),500); }}, 1000); } }
+        function pauseSnTimer() { snIsRunning=false; clearInterval(globalTimerInterval); }
+        function resetSnTimer() { snIsRunning=false; clearInterval(globalTimerInterval); snTimeLeft=snInitial; const d=document.getElementById('sn-timer-display'); d.classList.remove('animate-shake','text-red-500'); d.classList.add('text-white'); updateSnTimerDisplay(); }
+
+        // ==========================================
+        // GAME 6: POLITICAL JEOPARDY
+        // ==========================================
+        let jeopScoreA = 0, jeopScoreB = 0, currentJeopValue = 0, currentJeopCell = null;
+        let jeopTimeLeft = 30, jeopGlobalTime = 30, jeopIsRunning = false, jeopTimerInterval;
+        let jeopIsRisky = false;
+
+        function toggleJeopMode() {
+            jeopIsRisky = !jeopIsRisky;
+            const btn = document.getElementById('jeop-mode-btn');
+            const desc = document.getElementById('jeop-mode-desc');
+            const riskyBtns = document.querySelectorAll('.jeop-risky-btn');
+            
+            if(jeopIsRisky) {
+                btn.textContent = 'Risky Mode';
+                btn.className = 'bg-red-700 hover:bg-red-600 text-white px-5 py-2 rounded-lg font-bold transition shadow-md border border-red-500 animate-pulse';
+                desc.textContent = 'Wrong answers deduct points!';
+                desc.classList.replace('text-slate-400', 'text-red-400');
+                riskyBtns.forEach(b => b.classList.remove('hidden'));
+            } else {
+                btn.textContent = 'Normal (Safe)';
+                btn.className = 'bg-emerald-700 hover:bg-emerald-600 text-white px-5 py-2 rounded-lg font-bold transition shadow-md border border-emerald-500';
+                desc.textContent = 'Wrong answers do not lose points.';
+                desc.classList.replace('text-red-400', 'text-slate-400');
+                riskyBtns.forEach(b => b.classList.add('hidden'));
+            }
+        }
+
+        function initJeopardy() {
+            jeopScoreA = 0; jeopScoreB = 0; document.getElementById('jeop-score-a').textContent = 0; document.getElementById('jeop-score-b').textContent = 0;
+            const board = document.getElementById('jeopardy-board'); board.innerHTML = '';
+            
+            board.className = "min-w-[800px] grid grid-cols-5 gap-2";
+            
+            jeopardyCategories.forEach(cat => {
+                const header = document.createElement('div');
+                header.className = "bg-slate-800 text-yellow-400 font-display text-sm md:text-base text-center py-4 px-2 uppercase shadow-inner border-b-4 border-slate-900 leading-tight flex items-center justify-center h-20 tracking-wider";
+                header.textContent = cat.name;
+                board.appendChild(header);
+            });
+            for(let row=0; row<4; row++) {
+                jeopardyCategories.forEach((cat) => {
+                    const val = (row+1)*100;
+                    const cell = document.createElement('div');
+                    cell.className = "bg-blue-900/80 hover:bg-blue-800 text-yellow-500 font-display text-3xl md:text-4xl text-center py-6 cursor-pointer border-b-4 border-blue-950 transition active:translate-y-1 active:border-b-0";
+                    cell.textContent = val;
+                    cell.onclick = () => openJeopardyQ(cat.name, cat.questions[row], val, cell);
+                    board.appendChild(cell);
+                });
+            }
+            showView('jeopardy');
+        }
+
+        function openJeopardyQ(catName, qObj, val, cellElement) {
+            if(cellElement.classList.contains('opacity-0')) return;
+            currentJeopValue = val; currentJeopCell = cellElement;
+            document.getElementById('jeop-cat-val').textContent = `${catName} for ${val}`;
+            document.getElementById('jeop-q-text').textContent = qObj.q;
+            document.getElementById('jeop-a-text').textContent = qObj.a;
+            
+            document.getElementById('jeop-answer-area').classList.add('hidden');
+            document.getElementById('jeop-reveal-btn').classList.remove('hidden');
+            document.getElementById('jeop-modal').classList.remove('hidden');
+        }
+
+        function cancelJeopardy() {
+            currentJeopCell.classList.remove('opacity-0', 'cursor-default'); 
+            currentJeopCell.classList.add('hover:bg-blue-800', 'active:translate-y-1');
+            document.getElementById('jeop-modal').classList.add('hidden');
+        }
+
+        function awardJeopardy(team, isPositive) {
+            let points = isPositive ? currentJeopValue : -currentJeopValue;
+            
+            if(team===1) { jeopScoreA += points; document.getElementById('jeop-score-a').textContent = jeopScoreA; }
+            if(team===2) { jeopScoreB += points; document.getElementById('jeop-score-b').textContent = jeopScoreB; }
+            
+            if (!isPositive && team !== 0) return;
+            
+            currentJeopCell.classList.add('opacity-0', 'cursor-default'); currentJeopCell.classList.remove('hover:bg-blue-800', 'active:translate-y-1');
+            document.getElementById('jeop-modal').classList.add('hidden');
+            
+            const allCells = document.getElementById('jeopardy-board').children;
+            let finished = true;
+            for(let i=5; i<allCells.length; i++) { if(!allCells[i].classList.contains('opacity-0')) finished = false; }
+            
+            if(finished) { 
+                let winnerText = jeopScoreA > jeopScoreB ? "Left Wing Wins!" : (jeopScoreB > jeopScoreA ? "Right Wing Wins!" : "It's a Bipartisan Tie!");
+                // Using an educational/celebration GIF
+                let gifUrl = "https://media.giphy.com/media/xT0xezQGU5xCDJuCPe/giphy.gif"; 
+                setTimeout(()=>endGame(
+                    `Jeopardy Complete!<br><span class="text-5xl text-yellow-400 mt-4 block font-bold">${winnerText}</span>`, 
+                    `<img src="${gifUrl}" class="mx-auto rounded-xl shadow-lg mt-6 max-h-64 border-4 border-yellow-500">`
+                ), 1000); 
+            }
+        }
+
+        // ==========================================
+        // GAME 7: CAMPAIGN TRAIL TRIVIA (Millionaire)
+        // ==========================================
+        let milDeck = [], milLevel = 0;
+        const prizeLadder = ["School Board", "City Council", "Mayor", "State Rep", "Congressperson", "Governor", "Senator", "Vice President", "President", "President of the World"];
+        let currentMilQ = null;
+        let milTimerInterval;
+        let milTimeLeft = 15;
+
+        const sndCorrect = new Audio('https://www.myinstants.com/media/sounds/extremely-loud-correct-buzzer.mp3');
+        const sndIncorrect = new Audio('https://www.myinstants.com/media/sounds/extremely-loud-incorrect-buzzer.mp3');
+
+        function initMillionaire() {
+            milLevel = 0;
+            milDeck = shuffleArray([...mogulQuestions]).slice(0, 10);
+            
+            clearInterval(milTimerInterval);
+            
+            const btn5050 = document.getElementById('btn-5050');
+            btn5050.disabled = false;
+            btn5050.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-slate-700', 'border-slate-500');
+            btn5050.classList.add('bg-yellow-600', 'hover:bg-yellow-500', 'border-yellow-300');
+
+            const btnAudience = document.getElementById('btn-audience');
+            btnAudience.disabled = false;
+            btnAudience.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-slate-700', 'border-slate-500');
+            btnAudience.classList.add('bg-blue-600', 'hover:bg-blue-500', 'border-blue-300');
+            
+            document.getElementById('mil-audience-poll').classList.add('hidden');
+
+            showView('millionaire');
+            loadMilQuestion();
+        }
+
+        function updateLadderUI() {
+            const steps = document.querySelectorAll('.ladder-step');
+            steps.forEach(step => {
+                const stepLevel = parseInt(step.getAttribute('data-level'));
+                step.classList.remove('active', 'passed');
+                if (stepLevel === milLevel) {
+                    step.classList.add('active');
+                } else if (stepLevel < milLevel) {
+                    step.classList.add('passed');
+                }
+            });
+        }
+
+        function loadMilQuestion() {
+            clearInterval(milTimerInterval);
+            document.getElementById('mil-audience-poll').classList.add('hidden');
+            
+            if (milLevel >= 10) {
+                let gifUrl = "https://media.giphy.com/media/26tOZ42Mg6pbTUPHW/giphy.gif";
+                endGame("You won the ultimate election! You are President of the World!", `<img src="${gifUrl}" class="mx-auto rounded-xl shadow-lg mt-6 max-h-64 border-4 border-yellow-500">`);
+                return;
+            }
+            updateLadderUI();
+            currentMilQ = milDeck[milLevel];
+            
+            const timerDisplay = document.getElementById('mil-timer-display');
+            if (milLevel < 4) {
+                timerDisplay.classList.remove('hidden');
+                milTimeLeft = 15;
+                timerDisplay.textContent = milTimeLeft;
+                timerDisplay.classList.remove('text-red-600', 'animate-pulse');
+                
+                milTimerInterval = setInterval(() => {
+                    milTimeLeft--;
+                    timerDisplay.textContent = milTimeLeft;
+                    if (milTimeLeft <= 5) {
+                        timerDisplay.classList.add('text-red-600', 'animate-pulse');
+                    }
+                    if (milTimeLeft <= 0) {
+                        clearInterval(milTimerInterval);
+                        handleMilTimeout();
+                    }
+                }, 1000);
+            } else {
+                timerDisplay.classList.add('hidden');
+            }
+
+            const qText = document.getElementById('mil-q-text');
+            qText.parentElement.classList.remove('animate-pop-in'); void qText.parentElement.offsetWidth; qText.parentElement.classList.add('animate-pop-in');
+            qText.textContent = currentMilQ.q;
+
+            const container = document.getElementById('mil-options');
+            container.innerHTML = '';
+            
+            const letters = ['A', 'B', 'C', 'D'];
+            currentMilQ.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "mil-opt-btn bg-slate-800 hover:bg-slate-700 border-2 border-yellow-600/50 text-white font-bold py-5 px-6 rounded-xl transition text-left flex gap-4 text-xl shadow-[0_4px_0_#856404] active:translate-y-1 active:shadow-none font-display";
+                btn.innerHTML = `<span class="text-yellow-400 w-6">${letters[idx]}:</span> <span class="flex-grow">${opt}</span>`;
+                btn.onclick = () => checkMilAnswer(idx, btn);
+                container.appendChild(btn);
+            });
+        }
+
+        function handleMilTimeout() {
+            const container = document.getElementById('mil-options');
+            Array.from(container.children).forEach(b => b.disabled = true);
+            sndIncorrect.play().catch(e => console.log("Audio blocked"));
+            
+            Array.from(container.children)[currentMilQ.ans].classList.replace('bg-slate-800', 'bg-emerald-600');
+            
+            const winnings = milLevel > 0 ? prizeLadder[milLevel - 1] : "Just a Citizen";
+            setTimeout(() => endGame(`Time ran out! You end your career as: ${winnings}.`), 2500);
+        }
+
+        function use5050() {
+            const btn5050 = document.getElementById('btn-5050');
+            if (btn5050.disabled) return;
+            
+            btn5050.disabled = true;
+            btn5050.classList.remove('bg-yellow-600', 'hover:bg-yellow-500', 'border-yellow-300');
+            btn5050.classList.add('bg-slate-700', 'border-slate-500', 'opacity-50', 'cursor-not-allowed');
+
+            const container = document.getElementById('mil-options');
+            let wrongIndices = [0, 1, 2, 3].filter(i => i !== currentMilQ.ans);
+            wrongIndices = shuffleArray(wrongIndices).slice(0, 2);
+
+            Array.from(container.children).forEach((btn, idx) => {
+                if (wrongIndices.includes(idx)) {
+                    btn.style.visibility = 'hidden'; 
+                }
+            });
+        }
+
+        function useAudience() {
+            const btnAudience = document.getElementById('btn-audience');
+            if (btnAudience.disabled) return;
+            
+            btnAudience.disabled = true;
+            btnAudience.classList.remove('bg-blue-600', 'hover:bg-blue-500', 'border-blue-300');
+            btnAudience.classList.add('bg-slate-700', 'border-slate-500', 'opacity-50', 'cursor-not-allowed');
+
+            const pollDiv = document.getElementById('mil-audience-poll');
+            pollDiv.classList.remove('hidden');
+            pollDiv.innerHTML = '<span class="animate-pulse">Surveying likely voters...</span>';
+
+            setTimeout(() => {
+                let percentages = [0, 0, 0, 0];
+                const correctBoost = Math.floor(Math.random() * 20) + 55; 
+                percentages[currentMilQ.ans] = correctBoost;
+                
+                let remaining = 100 - correctBoost;
+                const container = document.getElementById('mil-options');
+                
+                let visibleIndices = [];
+                Array.from(container.children).forEach((btn, idx) => {
+                    if (idx !== currentMilQ.ans && btn.style.visibility !== 'hidden') {
+                        visibleIndices.push(idx);
+                    }
+                });
+
+                if (visibleIndices.length > 0) {
+                    for (let i = 0; i < visibleIndices.length - 1; i++) {
+                        let share = Math.floor(Math.random() * remaining);
+                        percentages[visibleIndices[i]] = share;
+                        remaining -= share;
+                    }
+                    percentages[visibleIndices[visibleIndices.length - 1]] = remaining;
+                }
+
+                let resultHTML = '<strong class="text-blue-300 uppercase tracking-widest block mb-3 border-b border-blue-500/50 pb-1">Pollster Results:</strong>';
+                const letters = ['A', 'B', 'C', 'D'];
+                currentMilQ.options.forEach((opt, idx) => {
+                    if (container.children[idx].style.visibility !== 'hidden') {
+                        resultHTML += `<div class="mb-1"><span class="inline-block w-8 font-black text-yellow-400">${letters[idx]}:</span> ${percentages[idx]}%</div>`;
+                    }
+                });
+                
+                pollDiv.innerHTML = resultHTML;
+            }, 1200);
+        }
+
+        function checkMilAnswer(selectedIndex, btnElement) {
+            clearInterval(milTimerInterval);
+            const container = document.getElementById('mil-options');
+            Array.from(container.children).forEach(b => b.disabled = true);
+
+            btnElement.classList.replace('bg-slate-800', 'bg-yellow-500');
+            btnElement.classList.replace('hover:bg-slate-700', 'bg-yellow-500');
+            btnElement.classList.replace('text-white', 'text-black');
+
+            setTimeout(() => {
+                if (selectedIndex === currentMilQ.ans) {
+                    sndCorrect.play().catch(e => console.log("Audio blocked"));
+                    btnElement.classList.replace('bg-yellow-500', 'bg-emerald-600');
+                    btnElement.classList.replace('text-black', 'text-white');
+                    setTimeout(() => {
+                        milLevel++;
+                        loadMilQuestion();
+                    }, 1500);
+                } else {
+                    sndIncorrect.play().catch(e => console.log("Audio blocked"));
+                    btnElement.classList.replace('bg-yellow-500', 'bg-red-600');
+                    btnElement.classList.replace('text-black', 'text-white');
+                    btnElement.classList.add('animate-shake');
+                    Array.from(container.children)[currentMilQ.ans].classList.replace('bg-slate-800', 'bg-emerald-600');
+                    
+                    const winnings = milLevel > 0 ? prizeLadder[milLevel - 1] : "Just a Citizen";
+                    setTimeout(() => endGame(`You lost the election! You end your career as: ${winnings}.`), 2500);
+                }
+            }, 1500);
+        }
+
+        // ==========================================
+        // GAME 8: GRIDLOCK (Baamboozle)
+        // ==========================================
+        let bbzScoreA = 0, bbzScoreB = 0, currentBbzCell = null, currentBbzData = null;
+        let bbzTimeLeft = 30, bbzInitial = 30, bbzIsRunning = false;
+
+        function initBaamboozle() {
+            bbzScoreA = 0; bbzScoreB = 0;
+            updateBbzScores();
+            resetBbzTimer();
+            
+            const board = document.getElementById('bbz-board');
+            board.innerHTML = '';
+            
+            let shuffledDeck = shuffleArray([...baamData]);
+
+            shuffledDeck.forEach((item, index) => {
+                const cell = document.createElement('div');
+                cell.className = "bg-blue-900/80 hover:bg-blue-800 text-yellow-400 font-display text-5xl text-center py-6 cursor-pointer border-b-4 border-blue-950 transition active:translate-y-1 active:border-b-0 rounded-xl shadow-lg";
+                cell.textContent = index + 1;
+                cell.onclick = () => openBbzTile(item, cell);
+                board.appendChild(cell);
+            });
+            showView('baamboozle');
+        }
+        
+        // --- BAAMBOOZLE TIMER LOGIC ---
+        function updateBbzTimerDisplay() {
+            const d = document.getElementById('bbz-timer-display');
+            d.innerText = bbzTimeLeft;
+            if(bbzTimeLeft <= 10 && bbzTimeLeft > 0) d.classList.add('text-red-500', 'animate-pulse'); else d.classList.remove('text-red-500', 'animate-pulse');
+        }
+        function adjustBbzTimer(amt) {
+            bbzInitial = Math.max(5, bbzInitial + amt);
+            if(!bbzIsRunning) {
+                bbzTimeLeft = bbzInitial;
+                updateBbzTimerDisplay();
+            }
+        }
+        function startBbzTimer() {
+            if(!bbzIsRunning && bbzTimeLeft > 0) {
+                bbzIsRunning = true;
+                document.getElementById('bbz-pause-btn').textContent = "Pause";
+                globalTimerInterval = setInterval(() => {
+                    bbzTimeLeft--; updateBbzTimerDisplay();
+                    if(bbzTimeLeft <= 0) {
+                        clearInterval(globalTimerInterval); bbzIsRunning = false;
+                        const d = document.getElementById('bbz-timer-display');
+                        d.innerText = "00";
+                    }
+                }, 1000);
+            }
+        }
+        function pauseBbzTimer() {
+            if (bbzIsRunning) {
+                bbzIsRunning = false; clearInterval(globalTimerInterval);
+                document.getElementById('bbz-pause-btn').textContent = "Resume";
+            } else {
+                startBbzTimer();
+            }
+        }
+        function resetBbzTimer() {
+            bbzIsRunning = false; clearInterval(globalTimerInterval);
+            bbzTimeLeft = bbzInitial; updateBbzTimerDisplay();
+        }
+
+        function openBbzTile(item, cellElement) {
+            if(cellElement.classList.contains('opacity-0')) return;
+            currentBbzCell = cellElement;
+            currentBbzData = item;
+
+            document.getElementById('bbz-modal').classList.remove('hidden');
+
+            if (item.type === 'q') {
+                document.getElementById('bbz-q-area').classList.remove('hidden');
+                document.getElementById('bbz-p-area').classList.add('hidden');
+                document.getElementById('bbz-q-text').textContent = item.q;
+                document.getElementById('bbz-a-text').textContent = item.a;
+                document.getElementById('bbz-answer-area').classList.add('hidden');
+                document.getElementById('bbz-reveal-btn').classList.remove('hidden');
+                
+                resetBbzTimer();
+                startBbzTimer();
+            } else {
+                document.getElementById('bbz-q-area').classList.add('hidden');
+                document.getElementById('bbz-p-area').classList.remove('hidden');
+                document.getElementById('bbz-p-title').textContent = item.title;
+                document.getElementById('bbz-p-desc').textContent = item.desc;
+            }
+        }
+
+        function resolveBbz(team) { 
+            if (currentBbzData.type === 'q') {
+                if (team === 1) bbzScoreA += 25;
+                if (team === 2) bbzScoreB += 25;
+            } else {
+                if (team !== 0) {
+                    if (currentBbzData.action === 'gain') {
+                        if (team === 1) bbzScoreA += currentBbzData.amount;
+                        if (team === 2) bbzScoreB += currentBbzData.amount;
+                    } else if (currentBbzData.action === 'lose') {
+                        if (team === 1) bbzScoreA = Math.max(0, bbzScoreA - currentBbzData.amount);
+                        if (team === 2) bbzScoreB = Math.max(0, bbzScoreB - currentBbzData.amount);
+                    } else if (currentBbzData.action === 'steal') {
+                        if (team === 1) {
+                            let stolen = Math.min(currentBbzData.amount, bbzScoreB);
+                            bbzScoreB -= stolen; bbzScoreA += stolen;
+                        } else if (team === 2) {
+                            let stolen = Math.min(currentBbzData.amount, bbzScoreA);
+                            bbzScoreA -= stolen; bbzScoreB += stolen;
+                        }
+                    } else if (currentBbzData.action === 'swap') {
+                        let temp = bbzScoreA; bbzScoreA = bbzScoreB; bbzScoreB = temp;
+                    } else if (currentBbzData.action === 'bankrupt') {
+                        if (team === 1) bbzScoreA = 0;
+                        if (team === 2) bbzScoreB = 0;
+                    }
+                }
+            }
+
+            updateBbzScores();
+            closeBbzModal();
+        }
+
+        function closeBbzModal() {
+            clearInterval(globalTimerInterval);
+            currentBbzCell.classList.add('opacity-0', 'cursor-default');
+            currentBbzCell.classList.remove('hover:bg-blue-800', 'active:translate-y-1');
+            document.getElementById('bbz-modal').classList.add('hidden');
+            checkBbzEnd();
+        }
+
+        function cancelBbz() { 
+            clearInterval(globalTimerInterval);
+            document.getElementById('bbz-modal').classList.add('hidden'); 
+        }
+        
+        function updateBbzScores() { document.getElementById('bbz-score-a').textContent = bbzScoreA; document.getElementById('bbz-score-b').textContent = bbzScoreB; }
+        
+        function checkBbzEnd() {
+            const allCells = document.getElementById('bbz-board').children;
+            let finished = true;
+            for(let i=0; i<allCells.length; i++) { if(!allCells[i].classList.contains('opacity-0')) finished = false; }
+            if(finished) { 
+                let winner = bbzScoreA > bbzScoreB ? "Left Wing Wins!" : (bbzScoreB > bbzScoreA ? "Right Wing Wins!" : "It's a Tie!");
+                let gif = "https://media.giphy.com/media/xT0xezQGU5xCDJuCPe/giphy.gif"; 
+                setTimeout(()=>endGame(`Election Complete!<br><span class="text-5xl text-yellow-400 mt-4 block font-bold">${winner}</span>`, `<img src="${gif}" class="mx-auto rounded-xl shadow-lg mt-6 max-h-64 border-4 border-yellow-500">`), 1000); 
+            }
+        }
+
+        // ==========================================
+        // GAME 9: POLITICAL TYCOON (TRUE MONOPOLY - 6x6)
+        // ==========================================
+        
+        const ALL_TOKENS = ['🦅', '🐘', '🫏', '⚖️', '🏛️', '🗽', '📜', '🗳️', '💼', '🛡️', '🕊️', '💣', '🚜', '🏭', '🌍', '👑', '🏰', '🤝'];
+        let tycTokenA = '🫏';
+        let tycTokenB = '🐘';
+
+        function showTycoonSetup() {
+            showView('tycoon-setup');
+            renderTycoonTokenSelectors();
+        }
+
+        function renderTycoonTokenSelectors() {
+            const gridA = document.getElementById('setup-grid-a');
+            const gridB = document.getElementById('setup-grid-b');
+            gridA.innerHTML = ''; gridB.innerHTML = '';
+            
+            ALL_TOKENS.forEach(token => {
+                // Team A
+                const btnA = document.createElement('button');
+                btnA.className = `text-2xl p-2 rounded hover:bg-blue-500/30 transition ${tycTokenA === token ? 'bg-blue-500/50 ring-2 ring-blue-300' : ''}`;
+                btnA.textContent = token;
+                btnA.onclick = () => { tycTokenA = token; renderTycoonTokenSelectors(); document.getElementById('setup-token-a').textContent = token; };
+                gridA.appendChild(btnA);
+
+                // Team B
+                const btnB = document.createElement('button');
+                btnB.className = `text-2xl p-2 rounded hover:bg-red-500/30 transition ${tycTokenB === token ? 'bg-red-500/50 ring-2 ring-red-300' : ''}`;
+                btnB.textContent = token;
+                btnB.onclick = () => { tycTokenB = token; renderTycoonTokenSelectors(); document.getElementById('setup-token-b').textContent = token; };
+                gridB.appendChild(btnB);
+            });
+        }
+
+        function confirmTycoonSetup() {
+            initTycoon();
+        }
+
+        let tycPlayers = [
+            { pos: 0, money: 1000, tokenObj: null },
+            { pos: 0, money: 1000, tokenObj: null }
+        ];
+        let tycTurn = 0; 
+        let tycDeckQ = [];
+        let tycDeckC = [];
+        let activeSpaceId = null;
+
+        function initTycoon() {
+            tycPlayers = [
+                { pos: 0, money: 1000, tokenObj: document.getElementById('token-0') }, 
+                { pos: 0, money: 1000, tokenObj: document.getElementById('token-1') }
+            ];
+            tycTurn = 0;
+            tycDeckQ = shuffleArray([...tycoonQuiz]);
+            tycDeckC = shuffleArray([...tycoonChance]);
+            activeSpaceId = null;
+            
+            // Set Chosen Tokens
+            document.getElementById('tyc-p0-icon').textContent = tycTokenA;
+            document.getElementById('token-0').textContent = tycTokenA;
+            document.getElementById('tyc-p1-icon').textContent = tycTokenB;
+            document.getElementById('token-1').textContent = tycTokenB;
+            
+            // Reset property ownership
+            tycoonSpaces.forEach(sp => { if (sp.type === 'prop') sp.owner = null; });
+            
+            updateTycoonUI();
+            
+            const grid = document.getElementById('tycoon-board-grid');
+            Array.from(grid.children).forEach(child => { if(child.classList.contains('tycoon-space')) child.remove(); });
+
+            tycoonSpaces.forEach(sp => {
+                const div = document.createElement('div');
+                div.className = 'tycoon-space';
+                div.id = `tyc-space-${sp.id}`;
+                div.style.gridColumn = sp.col;
+                div.style.gridRow = sp.row;
+                
+                if (sp.type === 'corner' || sp.type === 'bonus') div.classList.add('tycoon-corner');
+                else if (sp.type === 'penalty' || sp.type === 'tax') {
+                    div.classList.add('bg-slate-800', 'text-white');
+                    div.style.borderColor = '#475569';
+                }
+                
+                let headerColor = sp.color ? `background-color: ${sp.color};` : '';
+                let headerHTML = sp.type === 'prop' ? `<div class="w-full h-3 rounded-t-sm mb-1 absolute top-0 left-0 opacity-50" style="${headerColor}"></div>` : '';
+
+                // Add Price/Rent tags for props
+                let priceHTML = sp.type === 'prop' ? `<div class="text-[8px] text-yellow-700 font-bold mt-1">$${sp.cost}</div>` : '';
+
+                div.innerHTML = `
+                    ${headerHTML}
+                    <div class="text-2xl mt-1 z-10">${sp.icon}</div>
+                    <div class="text-[9px] font-bold uppercase leading-tight mt-1 z-10 text-gray-800 ${sp.type==='penalty'||sp.type==='tax' ? 'text-white' : ''}">${sp.name}</div>
+                    ${priceHTML}
+                `;
+                grid.appendChild(div);
+            });
+
+            showView('tycoon');
+            
+            setTimeout(() => {
+                moveTokenVisually(0, 0);
+                moveTokenVisually(1, 0);
+            }, 100);
+        }
+
+        function updateTycoonUI() {
+            document.getElementById('tyc-score-0').textContent = tycPlayers[0].money;
+            document.getElementById('tyc-score-1').textContent = tycPlayers[1].money;
+            
+            const p0 = document.getElementById('tyc-panel-0');
+            const p1 = document.getElementById('tyc-panel-1');
+            
+            if (tycTurn === 0) {
+                p0.classList.remove('opacity-50', 'scale-95'); p0.classList.add('scale-105', 'ring-2', 'ring-blue-400');
+                p1.classList.add('opacity-50', 'scale-95'); p1.classList.remove('scale-105', 'ring-2', 'ring-red-400');
+                document.getElementById('tyc-turn-indicator').textContent = "Left Wing's Turn";
+                document.getElementById('tyc-turn-indicator').className = "text-3xl font-display text-blue-400 mb-2 tracking-widest uppercase drop-shadow-md";
+            } else {
+                p1.classList.remove('opacity-50', 'scale-95'); p1.classList.add('scale-105', 'ring-2', 'ring-red-400');
+                p0.classList.add('opacity-50', 'scale-95'); p0.classList.remove('scale-105', 'ring-2', 'ring-blue-400');
+                document.getElementById('tyc-turn-indicator').textContent = "Right Wing's Turn";
+                document.getElementById('tyc-turn-indicator').className = "text-3xl font-display text-red-400 mb-2 tracking-widest uppercase drop-shadow-md";
+            }
+
+            // Visual Update for Owned Properties
+            tycoonSpaces.forEach(sp => {
+                if(sp.type === 'prop' && sp.owner !== null) {
+                    const el = document.getElementById(`tyc-space-${sp.id}`);
+                    const ownerBannerId = `owner-banner-${sp.id}`;
+                    let banner = document.getElementById(ownerBannerId);
+                    
+                    if (!banner) {
+                        banner = document.createElement('div');
+                        banner.id = ownerBannerId;
+                        el.appendChild(banner);
+                    }
+
+                    if(sp.owner === 0) {
+                        el.style.borderColor = '#3b82f6';
+                        el.style.borderWidth = '3px';
+                        banner.textContent = "LEFT WING";
+                        banner.className = "absolute -top-3 left-1/2 transform -translate-x-1/2 text-[9px] font-bold px-2 py-0.5 rounded-sm text-white shadow-md z-10 bg-blue-600 animate-pop-in whitespace-nowrap";
+                    } else if (sp.owner === 1) {
+                        el.style.borderColor = '#f43f5e';
+                        el.style.borderWidth = '3px';
+                        banner.textContent = "RIGHT WING";
+                        banner.className = "absolute -top-3 left-1/2 transform -translate-x-1/2 text-[9px] font-bold px-2 py-0.5 rounded-sm text-white shadow-md z-10 bg-red-600 animate-pop-in whitespace-nowrap";
+                    }
+                }
+            });
+        }
+
+        function rollTycoonDice() {
+            const btn = document.getElementById('tyc-roll-btn');
+            const display = document.getElementById('tyc-dice-display');
+            btn.disabled = true;
+            btn.classList.add('opacity-50');
+            
+            display.classList.add('dice-roll-anim');
+            
+            let roll = 0;
+            let shuffleInt = setInterval(() => {
+                display.textContent = Math.floor(Math.random() * 6) + 1;
+            }, 50);
+
+            setTimeout(() => {
+                clearInterval(shuffleInt);
+                display.classList.remove('dice-roll-anim');
+                roll = Math.floor(Math.random() * 5) + 1; 
+                display.textContent = roll;
+                document.getElementById('tyc-status-text').textContent = `Rolled a ${roll}! moving...`;
+                
+                processMove(roll);
+            }, 600);
+        }
+
+        function moveTokenVisually(playerIdx, spaceId) {
+            const spaceEl = document.getElementById(`tyc-space-${spaceId}`);
+            const tokenEl = tycPlayers[playerIdx].tokenObj;
+            if(!spaceEl || !tokenEl) return;
+
+            const rect = spaceEl.getBoundingClientRect();
+            const boardRect = document.getElementById('tycoon-board-grid').getBoundingClientRect();
+            
+            let x = rect.left - boardRect.left + (rect.width / 2) - 22; 
+            let y = rect.top - boardRect.top + (rect.height / 2) - 22;
+            
+            if (playerIdx === 0) { x -= 12; y -= 12; }
+            else { x += 12; y += 12; }
+
+            tokenEl.style.transform = `translate(${x}px, ${y}px)`;
+        }
+
+        function processMove(roll) {
+            let p = tycPlayers[tycTurn];
+            let targetPos = (p.pos + roll) % 20;
+            
+            if (p.pos + roll >= 20) {
+                p.money += 200;
+                document.getElementById('tyc-status-text').textContent = `Passed ELECTION DAY! Collected $200 Campaign Funds.`;
+                updateTycoonUI();
+            }
+
+            p.pos = targetPos;
+            moveTokenVisually(tycTurn, targetPos);
+
+            setTimeout(() => {
+                resolveTycoonSpace(targetPos);
+            }, 600);
+        }
+
+        function resolveTycoonSpace(spaceId) {
+            const space = tycoonSpaces[spaceId];
+            activeSpaceId = spaceId;
+            
+            if (space.type === 'prop') {
+                if (space.owner === null) {
+                    showTycoonBuyPrompt(space, spaceId);
+                } else if (space.owner === tycTurn) {
+                    showTycoonNotice("Your Office", "You already control the " + space.name + ". Enjoy your power.", 0);
+                } else {
+                    let rent = space.rent || 100;
+                    tycPlayers[tycTurn].money -= rent;
+                    tycPlayers[space.owner].money += rent;
+                    let ownerName = space.owner === 0 ? "Left Wing" : "Right Wing";
+                    showTycoonNotice("Lobbying Fees Due!", `This office is controlled by the ${ownerName}. You paid them $${rent} to pass your bill.`, 0);
+                }
+            } else if (space.type === 'chance') {
+                showTycoonChanceModal();
+            } else if (space.type === 'tax') {
+                showTycoonNotice("Taxes Due", "You must pay political taxes. Lose $100.", -100);
+            } else if (space.type === 'penalty') {
+                if(spaceId === 5) showTycoonNotice("Campaign Scandal!", "The press caught you lying! Pay a $150 fine to silence them.", -150);
+                else showTycoonNotice("Filibustered!", "The opposition blocked your bill. Pay $150 to stay in the session.", -150);
+            } else if (space.type === 'bonus') {
+                showTycoonNotice("Swing State Win!", "You won a major swing state! Collect a $200 campaign bonus!", 200);
+            } else if (space.type === 'corner' && spaceId === 0) {
+                showTycoonNotice("Election Day", "You landed exactly on ELECTION DAY. Collect an extra $100!", 100);
+            }
+        }
+
+        function showTycoonBuyPrompt(space, spaceId) {
+            const cost = space.cost || 100;
+            const rent = space.rent || 50;
+            
+            if (tycPlayers[tycTurn].money < cost) {
+                showTycoonNotice("Insufficient Funds", `You need $${cost} to campaign for this office. You must pass.`, 0);
+                return;
+            }
+
+            document.getElementById('tyc-modal-header').textContent = `Campaign Opportunity`;
+            document.getElementById('tyc-modal-title').textContent = space.name;
+            document.getElementById('tyc-modal-desc').innerHTML = `This office is currently uncontrolled. Would you like to campaign for it?<br><br><span class="text-yellow-400 font-bold">Cost: $${cost}</span><br><span class="text-emerald-400 font-bold">Earns Lobbying Fees: $${rent}</span><br><br><span class="text-sm italic text-blue-300">If you choose to campaign, you must answer a political trivia question correctly. Wrong answers incur a $50 penalty!</span>`;
+            
+            document.getElementById('tyc-options-area').classList.add('hidden');
+            
+            const actionArea = document.getElementById('tyc-action-area');
+            actionArea.innerHTML = `
+                <div class="flex gap-4 justify-center">
+                    <button onclick="showTycoonQuizModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-4 px-8 rounded-xl transition text-lg shadow-[0_4px_0_#047857] flex-1">Start Campaign</button>
+                    <button onclick="closeTycoonModal()" class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-4 px-8 rounded-xl transition text-lg shadow-[0_4px_0_#334155] flex-1">Pass (Save Cash)</button>
+                </div>
+            `;
+            actionArea.classList.remove('hidden');
+            
+            document.getElementById('tyc-modal').classList.remove('hidden');
+        }
+
+        function showTycoonQuizModal() {
+            if (tycDeckQ.length === 0) tycDeckQ = shuffleArray([...tycoonQuiz]);
+            const q = tycDeckQ.pop();
+            const spaceId = activeSpaceId;
+            const space = tycoonSpaces[spaceId];
+            
+            document.getElementById('tyc-modal-header').textContent = `Campaigning for: ${space.name}`;
+            document.getElementById('tyc-modal-title').textContent = "Debate Challenge";
+            document.getElementById('tyc-modal-desc').textContent = `"${q.q}"`;
+            
+            const optArea = document.getElementById('tyc-options-area');
+            optArea.innerHTML = '';
+            optArea.classList.remove('hidden');
+            document.getElementById('tyc-action-area').classList.add('hidden');
+            
+            q.opts.forEach((optText, index) => {
+                const btn = document.createElement('button');
+                btn.className = "bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 px-6 rounded-xl border border-slate-600 transition text-lg shadow-md";
+                btn.textContent = optText;
+                btn.onclick = () => handleTycoonQuizAnswer(index === q.a, btn, optArea, spaceId);
+                optArea.appendChild(btn);
+            });
+            
+            document.getElementById('tyc-modal').classList.remove('hidden');
+        }
+
+        function handleTycoonQuizAnswer(isCorrect, btnElement, container, spaceId) {
+            Array.from(container.children).forEach(b => b.disabled = true);
+            const space = tycoonSpaces[spaceId];
+            const cost = space.cost || 100;
+            const rent = space.rent || 50;
+            
+            if(isCorrect) {
+                btnElement.classList.replace('bg-slate-800', 'bg-emerald-600');
+                btnElement.classList.replace('border-slate-600', 'border-emerald-400');
+                
+                tycPlayers[tycTurn].money -= cost;
+                tycoonSpaces[spaceId].owner = tycTurn;
+                
+                let teamColor = tycTurn === 0 ? "text-blue-400" : "text-red-400";
+                document.getElementById('tyc-modal-title').innerHTML = `<span class="${teamColor}">Office Acquired!</span>`;
+                document.getElementById('tyc-modal-desc').innerHTML = `Brilliant! You spent $${cost} and won the election for <strong>${space.name}</strong>. Rivals will now pay you $${rent} when they land here!`;
+            } else {
+                btnElement.classList.replace('bg-slate-800', 'bg-red-600');
+                btnElement.classList.add('animate-shake');
+                
+                tycPlayers[tycTurn].money -= 50;
+                document.getElementById('tyc-modal-title').textContent = "Rejected!";
+                document.getElementById('tyc-modal-desc').textContent = "Incorrect! The voters turned on you. You lost $50 in wasted ads and the office remains uncontrolled.";
+            }
+            
+            updateTycoonUI();
+            checkBankruptcy();
+            
+            setTimeout(() => {
+                container.classList.add('hidden');
+                document.getElementById('tyc-action-area').innerHTML = `
+                    <button onclick="closeTycoonModal()" class="bg-yellow-600 hover:bg-yellow-500 text-black font-bold py-4 px-10 rounded-xl transition text-xl shadow-[0_4px_0_#856404] w-full max-w-sm mx-auto uppercase tracking-widest">Continue</button>
+                `;
+                document.getElementById('tyc-action-area').classList.remove('hidden');
+            }, 1500); 
+        }
+
+        function showTycoonChanceModal() {
+            if (tycDeckC.length === 0) tycDeckC = shuffleArray([...tycoonChance]);
+            const card = tycDeckC.pop();
+            showTycoonNotice(card.title, card.desc, card.change);
+        }
+
+        function showTycoonNotice(title, desc, moneyChange) {
+            document.getElementById('tyc-modal-header').textContent = "Breaking News!";
+            document.getElementById('tyc-modal-title').textContent = title;
+            document.getElementById('tyc-modal-desc').textContent = desc;
+            
+            document.getElementById('tyc-options-area').classList.add('hidden');
+            document.getElementById('tyc-action-area').innerHTML = `
+                <button onclick="closeTycoonModal()" class="bg-yellow-600 hover:bg-yellow-500 text-black font-bold py-4 px-10 rounded-xl transition text-xl shadow-[0_4px_0_#856404] w-full max-w-sm mx-auto uppercase tracking-widest">Continue</button>
+            `;
+            document.getElementById('tyc-action-area').classList.remove('hidden');
+            
+            tycPlayers[tycTurn].money += moneyChange;
+            updateTycoonUI();
+            checkBankruptcy();
+            
+            document.getElementById('tyc-modal').classList.remove('hidden');
+        }
+
+        function checkBankruptcy() {
+            if (tycPlayers[0].money < 0) {
+                setTimeout(() => endGame("Election Over! The Right Wing bankrupts the Left Wing!"), 2000);
+            } else if (tycPlayers[1].money < 0) {
+                setTimeout(() => endGame("Election Over! The Left Wing bankrupts the Right Wing!"), 2000);
+            }
+        }
+
+        function closeTycoonModal() {
+            document.getElementById('tyc-modal').classList.add('hidden');
+            activeSpaceId = null;
+            
+            tycTurn = tycTurn === 0 ? 1 : 0;
+            updateTycoonUI();
+            
+            const btn = document.getElementById('tyc-roll-btn');
+            btn.disabled = false;
+            btn.classList.remove('opacity-50');
+            document.getElementById('tyc-status-text').textContent = "Ready to roll.";
+        }
+
+    </script>
+</body>
+</html>
