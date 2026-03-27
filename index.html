@@ -2137,13 +2137,19 @@
             }
             
             updateTycoonUI();
-            checkBankruptcy();
+            let isBankrupt = checkBankruptcy();
             
             setTimeout(() => {
                 container.classList.add('hidden');
-                document.getElementById('tyc-action-area').innerHTML = `
-                    <button onclick="closeTycoonModal()" class="bg-rose-600 hover:bg-rose-500 text-white font-bold py-4 px-10 rounded-xl transition text-xl shadow-[0_4px_0_#9f1239] w-full max-w-sm mx-auto uppercase tracking-widest">Continue</button>
-                `;
+                if (isBankrupt) {
+                    document.getElementById('tyc-action-area').innerHTML = `
+                        <div class="text-red-500 font-bold text-2xl uppercase tracking-widest animate-pulse mt-4">Bankrupt! Campaign Over!</div>
+                    `;
+                } else {
+                    document.getElementById('tyc-action-area').innerHTML = `
+                        <button onclick="closeTycoonModal()" class="bg-yellow-600 hover:bg-yellow-500 text-black font-bold py-4 px-10 rounded-xl transition text-xl shadow-[0_4px_0_#856404] w-full max-w-sm mx-auto uppercase tracking-widest">Continue</button>
+                    `;
+                }
                 document.getElementById('tyc-action-area').classList.remove('hidden');
             }, 1500); 
         }
@@ -2160,24 +2166,36 @@
             document.getElementById('tyc-modal-desc').textContent = desc;
             
             document.getElementById('tyc-options-area').classList.add('hidden');
-            document.getElementById('tyc-action-area').innerHTML = `
-                <button onclick="closeTycoonModal()" class="bg-rose-600 hover:bg-rose-500 text-white font-bold py-4 px-10 rounded-xl transition text-xl shadow-[0_4px_0_#9f1239] w-full max-w-sm mx-auto uppercase tracking-widest">Continue</button>
-            `;
-            document.getElementById('tyc-action-area').classList.remove('hidden');
             
             tycPlayers[tycTurn].money += moneyChange;
             updateTycoonUI();
-            checkBankruptcy();
+            let isBankrupt = checkBankruptcy();
+
+            if (isBankrupt) {
+                document.getElementById('tyc-action-area').innerHTML = `
+                    <div class="text-red-500 font-bold text-2xl uppercase tracking-widest animate-pulse mt-4">Bankrupt! Campaign Over!</div>
+                `;
+            } else {
+                document.getElementById('tyc-action-area').innerHTML = `
+                    <button onclick="closeTycoonModal()" class="bg-yellow-600 hover:bg-yellow-500 text-black font-bold py-4 px-10 rounded-xl transition text-xl shadow-[0_4px_0_#856404] w-full max-w-sm mx-auto uppercase tracking-widest">Continue</button>
+                `;
+            }
+            document.getElementById('tyc-action-area').classList.remove('hidden');
             
             document.getElementById('tyc-modal').classList.remove('hidden');
         }
 
         function checkBankruptcy() {
             if (tycPlayers[0].money < 0) {
-                setTimeout(() => endGame("Election Over! The Right Wing bankrupts the Left Wing!"), 2000);
+                score = tycPlayers[1].money;
+                setTimeout(() => endGame("Election Over! The Right Wing bankrupts the Left Wing!"), 2500);
+                return true;
             } else if (tycPlayers[1].money < 0) {
-                setTimeout(() => endGame("Election Over! The Left Wing bankrupts the Right Wing!"), 2000);
+                score = tycPlayers[0].money;
+                setTimeout(() => endGame("Election Over! The Left Wing bankrupts the Right Wing!"), 2500);
+                return true;
             }
+            return false;
         }
 
         function closeTycoonModal() {
